@@ -1,0 +1,8 @@
+# Local/source-only files not needed by the public website
+assets/
+*.before-*
+ocr-all.txt
+questions.raw.json
+build_questions.py
+build_lesson_extra_bank.py
+.DS_Store

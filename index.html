@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>CEFR A1–A2 Practice</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <button class="brand" id="brandHome" type="button" aria-label="กลับหน้าหลัก">
+      <span class="brand-mark">A1</span>
+      <span class="brand-copy">
+        <strong>CEFR A1–A2 Practice</strong>
+        <small>ระบบฝึกทำโจทย์ Grammar · 300 ข้อ</small>
+      </span>
+    </button>
+    <div class="top-actions"><button id="openLessons" class="secondary-btn" type="button">บทเรียน</button><button id="openVocabulary" class="secondary-btn" type="button">คำศัพท์</button><button id="openSetPicker" class="secondary-btn" type="button">เลือกชุด</button></div>
+  </header>
+
+  <main class="shell">
+    <section id="homeView" class="home-view">
+      <div class="hero">
+        <div class="hero-copy">
+          <h1>ฝึกทำโจทย์ แล้วค่อยตรวจทีเดียว</h1>
+          <p>เลือกทำ Set 1–20 ได้อิสระ หรือสุ่ม 30 ข้อจากทุกชุด ระบบจะยังไม่เฉลยระหว่างทำ และจะแสดงคะแนนพร้อมคำอธิบายเมื่อกดตรวจคำตอบ</p>
+        </div>
+        <button id="startRandom" class="random-cta" type="button">
+          <span class="random-icon">↻</span>
+          <span><strong>สุ่มคำถาม 30 ข้อ</strong><small>สุ่มจากทุก Set แบบไม่ซ้ำ</small></span>
+        </button>
+      </div>
+
+      <div class="overview" id="overview"></div>
+
+      <div class="section-head">
+        <div>
+          <h2>เลือกชุดฝึก</h2>
+          <p>แต่ละชุดมี 15 ข้อ จะข้ามไปชุดไหนก่อนก็ได้</p>
+        </div>
+      </div>
+      <div class="set-grid" id="setGrid"></div>
+      <div class="study-tools-grid">
+        <div class="lesson-cta">
+          <div><span class="study-kicker">LEARNING PATH</span><h2>เรียนเป็นบท แล้วค่อยทำแบบทดสอบ</h2><p>บทเรียนสร้างจากหัวข้อที่พบในโจทย์จริง พร้อมตัวอย่างจากข้อสอบ ต้องผ่านแบบทดสอบท้ายบทอย่างน้อย 80% จึงปลดล็อกบทถัดไป</p></div>
+          <button id="openLessonsHome" class="primary-btn" type="button">เปิดบทเรียน →</button>
+        </div>
+        <div class="study-tools">
+          <div><h2>คลังคำศัพท์ก่อนสอบ</h2><p>รวมคำศัพท์ วลี และคำเชื่อมจากโจทย์ทุก Set พร้อมคำแปล ตัวอย่าง และตำแหน่งที่พบ</p></div>
+          <button id="openVocabularyHome" class="primary-btn" type="button">เปิดหน้าคำศัพท์ →</button>
+        </div>
+      </div>
+      <div class="home-actions">
+        <button id="resetAll" class="danger-ghost" type="button">ล้างประวัติการฝึกทั้งหมด</button>
+      </div>
+    </section>
+
+    <section id="vocabView" class="vocab-view" hidden>
+      <div class="vocab-head">
+        <div>
+          <button id="vocabBackHome" class="text-btn" type="button">← กลับหน้าหลัก</button>
+          <h1>คำศัพท์ที่ควรรู้ก่อนสอบ</h1>
+          <p>รวบรวมจากโจทย์ A1–A2 ทั้ง 20 Set พร้อมคำแปล ความหมายในบริบท ตัวอย่าง และตำแหน่งที่พบ</p>
+        </div>
+        <div class="vocab-count" id="vocabCount">0 คำ</div>
+      </div>
+      <div class="vocab-toolbar">
+        <label class="search-box"><span>ค้นหา</span><input id="vocabSearch" type="search" placeholder="เช่น proud, notice, look forward to..." autocomplete="off"></label>
+        <label><span>Set</span><select id="vocabSetFilter"><option value="all">ทุก Set</option></select></label>
+        <label><span>ประเภท</span><select id="vocabTypeFilter"><option value="all">ทั้งหมด</option><option value="วลี/รูปประโยค">วลี/รูปประโยค</option><option value="กริยา">กริยา</option><option value="คำคุณศัพท์">คำคุณศัพท์</option><option value="คำไวยากรณ์/คำเชื่อม">คำไวยากรณ์/คำเชื่อม</option><option value="คำศัพท์">คำศัพท์ทั่วไป</option></select></label>
+        <label><span>เรียงตาม</span><select id="vocabSort"><option value="important">ควรจำก่อน</option><option value="az">A–Z</option><option value="frequency">พบบ่อย</option></select></label>
+      </div>
+      <div class="vocab-note">คำแปลในหน้านี้เป็นคำแปลเพื่อช่วยท่องจำตามบริบทของแบบฝึกหัด ควรจำทั้ง <strong>คำ + วลี + ตัวอย่างประโยค</strong> ไม่ใช่จำคำแปลเดี่ยว ๆ อย่างเดียว</div>
+      <div id="vocabList" class="vocab-list"></div>
+      <div id="vocabEmpty" class="vocab-empty" hidden>ไม่พบคำศัพท์ตามตัวกรองนี้</div>
+    </section>
+
+
+    <section id="lessonView" class="lesson-view" hidden>
+      <div class="lesson-head">
+        <div>
+          <button id="lessonBackHome" class="text-btn" type="button">← กลับหน้าหลัก</button>
+          <h1>บทเรียน Grammar จากโจทย์จริง</h1>
+          <p>เรียนทีละหมวด ดูตัวอย่างจากข้อสอบ แล้วทำแบบทดสอบท้ายบท ต้องได้อย่างน้อย 80% เพื่อปลดล็อกบทถัดไป</p>
+        </div>
+        <div class="lesson-overall">
+          <strong id="lessonOverallPercent">0%</strong>
+          <span id="lessonOverallMeta">ผ่าน 0 / 0 บท</span>
+        </div>
+      </div>
+      <div class="lesson-progress-track"><span id="lessonOverallBar"></span></div>
+      <div id="lessonCatalogPanel">
+        <div class="section-head lesson-section-head"><div><h2>เส้นทางการเรียน</h2><p>บทถัดไปจะเปิดเมื่อบทก่อนหน้าผ่าน 80%</p></div></div>
+        <div id="lessonGrid" class="lesson-grid-cards"></div>
+      </div>
+      <div id="lessonDetailPanel" class="lesson-detail-panel" hidden></div>
+    </section>
+
+    <section id="quizView" class="quiz-view" hidden>
+      <div class="quiz-head">
+        <div>
+          <button id="backHome" class="text-btn" type="button">← กลับหน้าเลือกชุด</button>
+          <div class="quiz-title-line">
+            <h1 id="quizTitle">A1–A2 · Set 1</h1>
+            <span id="modeBadge" class="mode-badge">Set</span>
+          </div>
+          <p id="quizMeta">ตอบแล้ว 0/15 ข้อ</p>
+        </div>
+        <div class="quiz-head-actions"><button id="toggleDetailMode" class="secondary-btn detail-toggle" type="button" hidden>แสดงแบบละเอียด</button><div id="scoreChip" class="score-chip pending">ยังไม่ตรวจ</div></div>
+      </div>
+
+      <div class="progress-track" aria-label="ความคืบหน้า">
+        <div id="progressBar" class="progress-fill"></div>
+      </div>
+
+      <div id="statusBanner" class="status-banner" hidden></div>
+      <div id="questionList" class="question-list"></div>
+
+      <div class="check-dock">
+        <div class="check-copy">
+          <strong id="dockTitle">เลือกคำตอบให้ครบ แล้วกดตรวจ</strong>
+          <span id="dockMeta">ยังไม่แสดงเฉลยระหว่างทำ</span>
+        </div>
+        <div class="dock-actions">
+          <button id="resetAttempt" class="secondary-btn" type="button">เริ่มใหม่</button>
+          <button id="checkAnswers" class="primary-btn" type="button">ตรวจคำตอบ</button>
+        </div>
+      </div>
+
+      <div id="resultPanel" class="result-panel" hidden>
+        <div class="result-score">
+          <span>คะแนนที่ได้</span>
+          <strong id="resultScore">0 / 15</strong>
+          <p id="resultPercent">0%</p>
+        </div>
+        <div class="result-summary" id="resultSummary"></div>
+        <div class="result-actions">
+          <button id="prevSet" class="secondary-btn" type="button">← ชุดก่อนหน้า</button>
+          <button id="newRandom" class="secondary-btn" type="button" hidden>สุ่ม 30 ข้อใหม่</button>
+          <button id="nextSet" class="primary-btn" type="button">ชุดถัดไป →</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="questions.js"></script>
+  <script src="explanations.js"></script>
+  <script src="learning-data.js"></script>
+  <script src="sentence-structure.js"></script>
+  <script src="lesson-extra-questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
