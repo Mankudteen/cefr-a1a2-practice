@@ -17,7 +17,7 @@
         <small>A1–A2 · B1–B2 · Reading · Listening · Level Up</small>
       </span>
     </button>
-    <div class="top-actions"><button id="openAllCategories" class="secondary-btn" type="button">หมวดทั้งหมด</button><button id="openLessons" class="secondary-btn" type="button">บทเรียน</button><button id="openVocabulary" class="secondary-btn" type="button">คำศัพท์</button><button id="openSetPicker" class="secondary-btn" type="button">เลือกชุด</button></div>
+    <div class="top-actions"><button id="openAllCategories" class="secondary-btn" type="button">หมวดทั้งหมด</button><button id="openLessons" class="secondary-btn" type="button">บทเรียน</button><button id="openVocabulary" class="secondary-btn" type="button">คำศัพท์</button><button id="openSetPicker" class="secondary-btn" type="button">เลือกชุด</button><button id="accountButton" class="account-btn" type="button">Guest</button></div>
   </header>
 
   <main class="shell">
@@ -25,6 +25,7 @@
       <div class="category-overview">
         <div class="category-overview-copy"><span class="study-kicker">CEFR PRACTICE HUB</span><h1>เลือกหมวดที่ต้องการฝึก</h1><p>รวมโจทย์จากเอกสารใน Google Drive แยกตามแหล่งที่มา โดยเก็บข้อที่ซ้ำกันไว้เมื่อปรากฏในเอกสารคนละชุด</p></div>
         <div id="categoryGrid" class="category-grid"></div>
+        <button id="resumeLast" class="resume-banner" type="button" hidden><span>ทำต่อจากที่ค้างไว้</span><strong id="resumeLastTitle">—</strong><b>ทำต่อ →</b></button>
       </div>
       <div class="a1-section-label"><span>A1–A2</span><strong>Grammar Practice เดิม · 20 Sets · 300 ข้อ</strong></div>
       <div class="hero">
@@ -68,6 +69,12 @@
         <div id="collectionCount" class="vocab-count">0 ข้อ</div>
       </div>
       <div id="collectionNotice" class="source-notice"></div>
+      <div class="collection-tools">
+        <button id="sourceRandomStart" class="primary-btn" type="button">สุ่มคำถาม</button>
+        <button id="sourceRandomNew" class="secondary-btn" type="button" hidden>สุ่มชุดใหม่</button>
+        <button id="sourceLessonsOpen" class="secondary-btn" type="button">บทเรียนหมวดนี้</button>
+        <button id="sourceVocabularyOpen" class="secondary-btn" type="button">คำศัพท์หมวดนี้</button>
+      </div>
       <div id="collectionGrid" class="collection-grid"></div>
       <div id="collectionResources" class="collection-resources"></div>
     </section>
@@ -75,13 +82,42 @@
     <section id="sourceQuizView" class="source-quiz-view" hidden>
       <div class="quiz-head">
         <div><button id="sourceBackCollection" class="text-btn" type="button">← กลับรายการชุด</button><div class="quiz-title-line"><h1 id="sourceQuizTitle">ชุดฝึก</h1><span id="sourceKeyBadge" class="mode-badge">Source</span></div><p id="sourceQuizMeta"></p></div>
-        <div id="sourceScoreChip" class="score-chip pending">ยังไม่ตรวจ</div>
+        <div class="quiz-head-actions"><button id="sourceToggleDetail" class="secondary-btn detail-toggle" type="button" hidden>แสดงแบบละเอียด</button><div id="sourceScoreChip" class="score-chip pending">ยังไม่ตรวจ</div></div>
       </div>
       <div class="progress-track"><div id="sourceProgressBar" class="progress-fill"></div></div>
       <div id="sourceQuizNotice" class="source-notice"></div>
       <div id="sourceQuizList" class="question-list"></div>
       <div class="check-dock source-check-dock"><div class="check-copy"><strong id="sourceDockTitle">ทำโจทย์แล้วค่อยตรวจ</strong><span id="sourceDockMeta"></span></div><div class="dock-actions"><button id="sourceReset" class="secondary-btn" type="button">เริ่มใหม่</button><button id="sourceCheck" class="primary-btn" type="button">ตรวจคำตอบ</button></div></div>
       <div id="sourceResultPanel" class="source-result-panel" hidden></div>
+    </section>
+
+
+    <section id="sourceLessonView" class="lesson-view" hidden>
+      <div class="lesson-head">
+        <div>
+          <button id="sourceLessonBack" class="text-btn" type="button">← กลับหมวด</button>
+          <h1 id="sourceLessonTitle">บทเรียน</h1>
+          <p id="sourceLessonDescription">เรียนจากโจทย์ต้นฉบับในหมวดนี้ และต้องผ่านแบบทดสอบท้ายบท 80%</p>
+        </div>
+        <div class="lesson-overall"><strong id="sourceLessonPercent">0%</strong><span id="sourceLessonMeta">ผ่าน 0 / 0 บท</span></div>
+      </div>
+      <div class="lesson-progress-track"><span id="sourceLessonBar"></span></div>
+      <div id="sourceLessonCatalogPanel"><div id="sourceLessonGrid" class="lesson-grid-cards"></div></div>
+      <div id="sourceLessonDetailPanel" class="lesson-detail-panel" hidden></div>
+    </section>
+
+    <section id="sourceVocabView" class="vocab-view" hidden>
+      <div class="vocab-head">
+        <div><button id="sourceVocabBack" class="text-btn" type="button">← กลับหมวด</button><h1 id="sourceVocabTitle">คำศัพท์สำหรับท่องจำ</h1><p id="sourceVocabDescription">คำและวลีที่พบในโจทย์ของหมวดนี้ พร้อมความหมายและตัวอย่างจากโจทย์</p></div>
+        <div class="vocab-count" id="sourceVocabCount">0 คำ</div>
+      </div>
+      <div class="vocab-toolbar">
+        <label class="search-box"><span>ค้นหา</span><input id="sourceVocabSearch" type="search" placeholder="ค้นคำหรือวลี..." autocomplete="off"></label>
+        <label><span>เรียงตาม</span><select id="sourceVocabSort"><option value="important">ควรจำก่อน</option><option value="az">A–Z</option><option value="frequency">พบบ่อย</option></select></label>
+      </div>
+      <div class="vocab-note">คลังนี้ใช้คำจากโจทย์ต้นฉบับของหมวดนั้น ๆ และไม่ดึงโจทย์เสริมที่ถูกปิดไว้มาใช้</div>
+      <div id="sourceVocabList" class="vocab-list"></div>
+      <div id="sourceVocabEmpty" class="vocab-empty" hidden>ไม่พบคำศัพท์ตามที่ค้นหา</div>
     </section>
 
     <section id="vocabView" class="vocab-view" hidden>
@@ -171,6 +207,28 @@
       </div>
     </section>
   </main>
+  <div id="authModal" class="auth-modal" hidden>
+    <div class="auth-backdrop" data-auth-close></div>
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="auth-close" type="button" data-auth-close aria-label="ปิด">×</button>
+      <div id="authGuestPanel">
+        <h2 id="authTitle">เข้าสู่ระบบเพื่อบันทึกข้ามเครื่อง</h2>
+        <p>Guest จะเก็บความคืบหน้าในเบราว์เซอร์เครื่องนี้ เมื่อเชื่อม Supabase แล้วจะซิงก์คะแนน คำตอบ และบทเรียนตามบัญชีของแต่ละคน</p>
+        <div id="authConfigNotice" class="auth-notice" hidden></div>
+        <label class="auth-field"><span>อีเมล</span><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="auth-field"><span>รหัสผ่าน</span><input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร"></label>
+        <div id="authMessage" class="auth-message" hidden></div>
+        <div class="auth-actions"><button id="authSignIn" class="primary-btn" type="button">เข้าสู่ระบบ</button><button id="authSignUp" class="secondary-btn" type="button">สร้างบัญชี</button></div>
+        <button class="text-btn auth-guest" type="button" data-auth-close>ใช้งานแบบ Guest ต่อ</button>
+      </div>
+      <div id="authUserPanel" hidden>
+        <h2>บัญชีผู้เรียน</h2><p id="authUserEmail"></p>
+        <div class="auth-sync-state"><strong id="authSyncStatus">ซิงก์แล้ว</strong><span>ข้อมูลการเรียนจะผูกกับบัญชีนี้</span></div>
+        <div class="auth-actions"><button id="authSyncNow" class="secondary-btn" type="button">ซิงก์ตอนนี้</button><button id="authSignOut" class="danger-ghost" type="button">ออกจากระบบ</button></div>
+      </div>
+    </section>
+  </div>
+
 
   <script src="questions.js"></script>
   <script src="explanations.js"></script>
@@ -178,6 +236,11 @@
   <script src="sentence-structure.js"></script>
   <script src="lesson-extra-questions.js"></script>
   <script src="extended-data.js"></script>
+  <script src="extended-learning-data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
+  <script src="source-learning.js"></script>
+  <script src="auth-sync.js"></script>
 </body>
 </html>

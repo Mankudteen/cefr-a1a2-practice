@@ -37,7 +37,8 @@ const state = {
   sourceCategory: saved.sourceCategory || 'b1b2',
   sourceSetId: saved.sourceSetId || null,
   sourceAnswers: saved.sourceAnswers || {},
-  sourceChecked: saved.sourceChecked || {}
+  sourceChecked: saved.sourceChecked || {},
+  lastActivity: saved.lastActivity || null
 };
 
 const $ = (s) => document.querySelector(s);
@@ -57,8 +58,10 @@ function persist(){
     sourceCategory: state.sourceCategory,
     sourceSetId: state.sourceSetId,
     sourceAnswers: state.sourceAnswers,
-    sourceChecked: state.sourceChecked
+    sourceChecked: state.sourceChecked,
+    lastActivity: state.lastActivity
   }));
+  window.CEFR_SYNC?.queueSync?.();
 }
 
 function setAnswers(setNo){
@@ -88,14 +91,36 @@ function showHome(){
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
   $('#collectionView').hidden=true;
-  $('#sourceQuizView').hidden=true;
+  $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true;
   $('#homeView').hidden=false;
   renderHome();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+function renderResumeLast(){
+  const btn=$('#resumeLast'); if(!btn)return;
+  const a=state.lastActivity; btn.hidden=!a; if(!a)return;
+  let title='การฝึกล่าสุด';
+  if(a.kind==='a1-set')title=`A1–A2 · Set ${a.set}`;
+  else if(a.kind==='a1-random')title='A1–A2 · สุ่ม 30 ข้อ';
+  else if(a.kind==='a1-lesson')title=`A1–A2 · บทเรียนที่ ${Number(a.index)+1}`;
+  else if(a.kind==='source-set')title=sourceSetById(a.category,a.setId)?.title||`${extendedCollections?.[a.category]?.title||a.category} · ชุดฝึก`;
+  else if(a.kind==='source-random')title=`${extendedCollections?.[a.category]?.title||a.category} · ชุดสุ่ม`;
+  else if(a.kind==='source-lesson')title=`${extendedCollections?.[a.category]?.title||a.category} · บทเรียนที่ ${Number(a.index)+1}`;
+  $('#resumeLastTitle').textContent=title;
+  btn.onclick=()=>{
+    if(a.kind==='a1-set')openSet(a.set);
+    else if(a.kind==='a1-random')startRandom(false);
+    else if(a.kind==='a1-lesson'){showLessons();openLesson(Number(a.index)||0);}
+    else if(a.kind==='source-set')openSourceSet(a.category,a.setId);
+    else if(a.kind==='source-random')startSourceRandom(a.category,false);
+    else if(a.kind==='source-lesson'){showSourceLessons(a.category);openSourceLesson(a.category,Number(a.index)||0);}
+  };
+}
+
 function renderHome(){
   renderCategoryGrid();
+  renderResumeLast();
   const stats=homeStats();
   const learning=lessonStats();
   $('#overview').innerHTML=`
@@ -126,14 +151,14 @@ function renderHome(){
 }
 
 function openSet(setNo){
-  state.mode='set';
+  state.mode='set'; state.lastActivity={kind:'a1-set',set:setNo};
   state.currentSet=setNo;
   persist();
   $('#homeView').hidden=true;
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
   $('#collectionView').hidden=true;
-  $('#sourceQuizView').hidden=true;
+  $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true;
   $('#quizView').hidden=false;
   renderQuiz();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -153,13 +178,13 @@ function startRandom(forceNew=true){
   if(forceNew || !state.randomAttempt){
     state.randomAttempt={items:makeRandomItems(),answers:{},checked:false,createdAt:Date.now()};
   }
-  state.mode='random';
+  state.mode='random'; state.lastActivity={kind:'a1-random'};
   persist();
   $('#homeView').hidden=true;
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
   $('#collectionView').hidden=true;
-  $('#sourceQuizView').hidden=true;
+  $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true;
   $('#quizView').hidden=false;
   renderQuiz();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -201,7 +226,7 @@ function showVocabulary(){
   $('#quizView').hidden=true;
   $('#lessonView').hidden=true;
   $('#collectionView').hidden=true;
-  $('#sourceQuizView').hidden=true;
+  $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true;
   $('#vocabView').hidden=false;
   if(!$('#vocabSetFilter').dataset.ready){
     for(let i=1;i<=20;i++) $('#vocabSetFilter').insertAdjacentHTML('beforeend',`<option value="${i}">Set ${i}</option>`);
@@ -639,13 +664,14 @@ function sourceAnswerableCount(set){ return set.items.filter(sourceItemAnswerabl
 function sourceStatusLabel(status){
   if(status==='official') return 'มี KEY ทางการ';
   if(status==='transcript-derived') return 'เฉลยจาก transcript';
+  if(status==='mixed') return 'เฉลยหลายสถานะ';
   return 'ไม่มี KEY ทางการ';
 }
 
 function showCollection(category){
   const collection=extendedCollections?.[category]; if(!collection) return;
   state.mode='source-collection'; state.sourceCategory=category; persist();
-  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#sourceQuizView').hidden=true; $('#collectionView').hidden=false;
+  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true; $('#collectionView').hidden=false;
   $('#collectionMark').textContent=collection.accent||'CE';
   $('#collectionTitle').textContent=collection.title;
   $('#collectionDescription').textContent=collection.description;
@@ -680,14 +706,15 @@ function renderCollectionGrid(category){
 
 function openSourceSet(category,setId){
   const set=sourceSetById(category,setId); if(!set) return;
-  state.mode='source-quiz'; state.sourceCategory=category; state.sourceSetId=setId; persist();
-  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#collectionView').hidden=true; $('#sourceQuizView').hidden=false;
+  state.mode='source-quiz'; state.sourceCategory=category; state.sourceSetId=setId; state.lastActivity={kind:'source-set',category,setId}; persist();
+  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#collectionView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true; $('#sourceQuizView').hidden=false;
   renderSourceQuiz(); window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function sourceKeyNotice(set){
   if(set.keyStatus==='official') return '<strong>Official KEY:</strong> การตรวจถูก/ผิดใช้เฉลยที่พบในเอกสาร KEY ของ Google Drive';
   if(set.keyStatus==='transcript-derived') return '<strong>ไม่มี KEY ทางการในโฟลเดอร์:</strong> คะแนนของชุดนี้อนุมานจาก transcript ที่อยู่ในเอกสารต้นฉบับ จึงแยกสถานะออกจาก Official KEY';
+  if(set.keyStatus==='mixed') return '<strong>ชุดสุ่มหลายแหล่ง:</strong> ข้อที่มี KEY จะตรวจคะแนน ข้อที่ไม่มี KEY จะบันทึกคำตอบแต่ไม่เดาถูก/ผิด';
   return '<strong>ไม่มี KEY ทางการในโฟลเดอร์:</strong> คุณยังทำและบันทึกคำตอบได้ แต่ระบบจะไม่เดาเฉลยหรือแสดงว่าถูก/ผิด';
 }
 
@@ -728,6 +755,9 @@ function renderSourceQuiz(){
   $('#sourceKeyBadge').textContent=sourceStatusLabel(set.keyStatus); $('#sourceKeyBadge').className=`mode-badge source-${set.keyStatus||'missing'}`;
   $('#sourceScoreChip').className=`score-chip ${checked&&score.total?'done':'pending'}`;
   $('#sourceScoreChip').textContent=checked?(score.total?`${score.score}/${score.total}`:'บันทึกแล้ว'):'ยังไม่ตรวจ';
+  $('#sourceToggleDetail').hidden=!checked;
+  $('#sourceToggleDetail').textContent=state.detailMode?'ซ่อนรายละเอียด':'แสดงแบบละเอียด';
+  $('#sourceQuizView').classList.toggle('compact-explanations',checked && !state.detailMode);
   $('#sourceQuizNotice').innerHTML=sourceKeyNotice(set);
   const passageByFrom=new Map((set.passages||[]).map(p=>[p.from,p]));
   const audioByFrom=new Map((set.audioGroups||[]).map(a=>[a.from,a]));
@@ -1026,7 +1056,7 @@ function showLessons(){
   $('#quizView').hidden=true;
   $('#vocabView').hidden=true;
   $('#collectionView').hidden=true;
-  $('#sourceQuizView').hidden=true;
+  $('#sourceQuizView').hidden=true; $('#sourceLessonView').hidden=true; $('#sourceVocabView').hidden=true;
   $('#lessonView').hidden=false;
   renderLessonCatalog();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1065,7 +1095,7 @@ function openLesson(index){
   if(!lessonUnlocked(index)) return;
   const lessons=buildLessonCatalog();
   if(!lessons[index]) return;
-  state.lessonCurrent=index;
+  state.lessonCurrent=index; state.lastActivity={kind:'a1-lesson',index};
   persist();
   $('#lessonCatalogPanel').hidden=true;
   $('#lessonDetailPanel').hidden=false;
@@ -1228,6 +1258,7 @@ $('#collectionBackHome').addEventListener('click',showHome);
 $('#sourceBackCollection').addEventListener('click',()=>showCollection(state.sourceCategory));
 $('#sourceCheck').addEventListener('click',checkSourceAnswers);
 $('#sourceReset').addEventListener('click',resetSourceAttempt);
+$('#sourceToggleDetail').addEventListener('click',()=>{state.detailMode=!state.detailMode;persist();renderSourceQuiz();});
 $('#openLessons').addEventListener('click',showLessons);
 $('#openLessonsHome').addEventListener('click',showLessons);
 $('#lessonBackHome').addEventListener('click',showHome);
@@ -1248,7 +1279,11 @@ $('#resetAll').addEventListener('click',()=>{
   if(confirm('ล้างคำตอบ คะแนน ความคืบหน้าบทเรียน และชุดสุ่มทั้งหมดหรือไม่?')){
     state.answers={}; state.checked={}; state.randomAttempt=null; state.bestRandom=null;
     state.lessonProgress={passed:{},attempts:{},recent:{}}; state.lessonAttempt=null; state.lessonCurrent=0;
-    state.sourceAnswers={}; state.sourceChecked={}; state.sourceSetId=null;
+    state.sourceAnswers={}; state.sourceChecked={}; state.sourceSetId=null; state.lastActivity=null;
+    localStorage.removeItem('cefr-source-study-v1');
+    if(typeof sourceStudyState!=='undefined'){
+      sourceStudyState.random={}; sourceStudyState.lessonProgress={}; sourceStudyState.lessonAttempts={}; sourceStudyState.currentLesson={};
+    }
     persist(); renderHome();
   }
 });
