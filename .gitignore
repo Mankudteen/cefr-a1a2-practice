@@ -1,5 +1,8 @@
 # Local/source-only files not needed by the public website
-assets/
+assets/*
+!assets/listening/
+!assets/listening/**
+source-import/
 *.before-*
 ocr-all.txt
 questions.raw.json

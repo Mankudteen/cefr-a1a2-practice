@@ -33,7 +33,11 @@ const state = {
   detailMode: saved.detailMode ?? false,
   lessonProgress: saved.lessonProgress || {passed:{}, attempts:{}, recent:{}},
   lessonAttempt: saved.lessonAttempt || null,
-  lessonCurrent: Number.isInteger(saved.lessonCurrent) ? saved.lessonCurrent : 0
+  lessonCurrent: Number.isInteger(saved.lessonCurrent) ? saved.lessonCurrent : 0,
+  sourceCategory: saved.sourceCategory || 'b1b2',
+  sourceSetId: saved.sourceSetId || null,
+  sourceAnswers: saved.sourceAnswers || {},
+  sourceChecked: saved.sourceChecked || {}
 };
 
 const $ = (s) => document.querySelector(s);
@@ -49,7 +53,11 @@ function persist(){
     detailMode: state.detailMode,
     lessonProgress: state.lessonProgress,
     lessonAttempt: state.lessonAttempt,
-    lessonCurrent: state.lessonCurrent
+    lessonCurrent: state.lessonCurrent,
+    sourceCategory: state.sourceCategory,
+    sourceSetId: state.sourceSetId,
+    sourceAnswers: state.sourceAnswers,
+    sourceChecked: state.sourceChecked
   }));
 }
 
@@ -79,12 +87,15 @@ function showHome(){
   $('#quizView').hidden=true;
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
+  $('#collectionView').hidden=true;
+  $('#sourceQuizView').hidden=true;
   $('#homeView').hidden=false;
   renderHome();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function renderHome(){
+  renderCategoryGrid();
   const stats=homeStats();
   const learning=lessonStats();
   $('#overview').innerHTML=`
@@ -121,6 +132,8 @@ function openSet(setNo){
   $('#homeView').hidden=true;
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
+  $('#collectionView').hidden=true;
+  $('#sourceQuizView').hidden=true;
   $('#quizView').hidden=false;
   renderQuiz();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -145,6 +158,8 @@ function startRandom(forceNew=true){
   $('#homeView').hidden=true;
   $('#vocabView').hidden=true;
   $('#lessonView').hidden=true;
+  $('#collectionView').hidden=true;
+  $('#sourceQuizView').hidden=true;
   $('#quizView').hidden=false;
   renderQuiz();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -185,6 +200,8 @@ function showVocabulary(){
   $('#homeView').hidden=true;
   $('#quizView').hidden=true;
   $('#lessonView').hidden=true;
+  $('#collectionView').hidden=true;
+  $('#sourceQuizView').hidden=true;
   $('#vocabView').hidden=false;
   if(!$('#vocabSetFilter').dataset.ready){
     for(let i=1;i<=20;i++) $('#vocabSetFilter').insertAdjacentHTML('beforeend',`<option value="${i}">Set ${i}</option>`);
@@ -566,6 +583,198 @@ function summaryMessage(percent,unanswered){
   return `<strong>${title}</strong><p>${body}${unanswered?` และยังมี ${unanswered} ข้อที่ไม่ได้ตอบ`:''}</p>`;
 }
 
+function extendedCategoryCount(category){
+  const collection=extendedCollections?.[category];
+  if(!collection) return 0;
+  return collection.sets.reduce((sum,set)=>sum+(set.items?.length||0),0);
+}
+
+function renderCategoryGrid(){
+  const grid=$('#categoryGrid');
+  if(!grid || typeof extendedCollections==='undefined') return;
+  const cards=[
+    {id:'a1a2',mark:'A1',title:'A1–A2',desc:'Grammar 20 Sets พร้อมเฉลยละเอียด บทเรียน และคำศัพท์',count:300},
+    {id:'b1b2',mark:'B1',title:'B1–B2',desc:'9 Sets จากแบบฝึก B1–B2 พร้อม KEY ใน Drive',count:extendedCategoryCount('b1b2')},
+    {id:'reading',mark:'R',title:'Reading',desc:'Reading Test 1–3 · Form · Meaning · Fill in the blanks',count:extendedCategoryCount('reading')},
+    {id:'listening',mark:'L',title:'Listening',desc:'Listening Test 1–2 พร้อมไฟล์เสียงต้นฉบับ',count:extendedCategoryCount('listening')},
+    {id:'levelup',mark:'UP',title:'Level Up',desc:'Reading Practice ฉบับ Level Up พร้อม KEY',count:extendedCategoryCount('levelup')}
+  ];
+  grid.innerHTML=cards.map(card=>`<button type="button" class="category-card ${card.id==='a1a2'?'active':''}" data-category="${card.id}">
+    <span class="category-mark">${card.mark}</span><span class="category-card-copy"><strong>${escapeHtml(card.title)}</strong><small>${escapeHtml(card.desc)}</small></span><span class="category-count">${card.count} ข้อ</span>
+  </button>`).join('');
+  grid.querySelectorAll('[data-category]').forEach(btn=>btn.addEventListener('click',()=>{
+    const category=btn.dataset.category;
+    if(category==='a1a2') document.querySelector('.a1-section-label')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else showCollection(category);
+  }));
+}
+
+function sourceAttemptKey(category,setId){ return `${category}::${setId}`; }
+function sourceSetById(category,setId){ return extendedCollections?.[category]?.sets?.find(set=>set.id===setId) || null; }
+function sourceSetAnswers(category,setId){
+  const key=sourceAttemptKey(category,setId);
+  if(!state.sourceAnswers[key]) state.sourceAnswers[key]={};
+  return state.sourceAnswers[key];
+}
+function sourceItemAnswerable(item){ return item.kind!=='source-note'; }
+function sourceItemScorable(item){ return item.key!==null && item.key!==undefined && String(item.key).length>0; }
+function normalizeSourceAnswer(value){ return String(value??'').trim().toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' '); }
+function sourceAnswerCorrect(item,value){
+  if(!sourceItemScorable(item)) return null;
+  if(item.kind==='mcq' || (Array.isArray(item.options)&&item.options.length)) return value===item.key;
+  return normalizeSourceAnswer(value)===normalizeSourceAnswer(item.key);
+}
+function sourceScore(category,setId){
+  const set=sourceSetById(category,setId); if(!set) return {score:0,total:0};
+  const answers=sourceSetAnswers(category,setId); let score=0,total=0;
+  set.items.forEach(item=>{if(sourceItemScorable(item)){total++; if(sourceAnswerCorrect(item,answers[item.sourceNo])) score++;}});
+  return {score,total};
+}
+function sourceAnsweredCount(category,setId){
+  const set=sourceSetById(category,setId); if(!set) return 0;
+  const answers=sourceSetAnswers(category,setId);
+  return set.items.filter(sourceItemAnswerable).filter(item=>String(answers[item.sourceNo]??'').trim()!=='').length;
+}
+function sourceAnswerableCount(set){ return set.items.filter(sourceItemAnswerable).length; }
+function sourceStatusLabel(status){
+  if(status==='official') return 'มี KEY ทางการ';
+  if(status==='transcript-derived') return 'เฉลยจาก transcript';
+  return 'ไม่มี KEY ทางการ';
+}
+
+function showCollection(category){
+  const collection=extendedCollections?.[category]; if(!collection) return;
+  state.mode='source-collection'; state.sourceCategory=category; persist();
+  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#sourceQuizView').hidden=true; $('#collectionView').hidden=false;
+  $('#collectionMark').textContent=collection.accent||'CE';
+  $('#collectionTitle').textContent=collection.title;
+  $('#collectionDescription').textContent=collection.description;
+  const total=extendedCategoryCount(category);
+  $('#collectionCount').textContent=`${total.toLocaleString()} ข้อ/กิจกรรม`;
+  const missing=collection.sets.filter(s=>s.keyStatus==='missing').length;
+  const derived=collection.sets.filter(s=>s.keyStatus==='transcript-derived').length;
+  $('#collectionNotice').innerHTML=missing||derived
+    ? `<strong>สถานะเฉลย:</strong> ชุดที่มี KEY จะตรวจคะแนนตามเอกสารต้นฉบับ${missing?` · ${missing} ชุดไม่มี KEY ในโฟลเดอร์ จึงเก็บคำตอบแต่ไม่ตัดสินถูกผิด`:''}${derived?` · ${derived} ชุดใช้เฉลยที่อนุมานจาก transcript และติดป้ายแยกชัดเจน`:''}`
+    : '<strong>เฉลย:</strong> ชุดในหมวดนี้อ้างอิง KEY ที่พบใน Google Drive';
+  renderCollectionGrid(category);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderCollectionGrid(category){
+  const collection=extendedCollections[category]; const grid=$('#collectionGrid');
+  grid.innerHTML=collection.sets.map((set,index)=>{
+    const answers=sourceSetAnswers(category,set.id); const answered=sourceAnsweredCount(category,set.id); const total=sourceAnswerableCount(set);
+    const checked=!!state.sourceChecked[sourceAttemptKey(category,set.id)]; const score=sourceScore(category,set.id);
+    const progress=total?Math.round(answered/total*100):0;
+    const result=checked && score.total?`คะแนน ${score.score}/${score.total}`:sourceStatusLabel(set.keyStatus);
+    return `<button type="button" class="collection-card ${checked?'checked':''}" data-source-set="${escapeHtml(set.id)}">
+      <div class="collection-card-top"><span class="collection-index">${index+1}</span><span class="key-status ${set.keyStatus||'missing'}">${sourceStatusLabel(set.keyStatus)}</span></div>
+      <strong>${escapeHtml(set.title)}</strong><p>${escapeHtml(set.subtitle||'')}</p>
+      <div class="mini-progress"><span style="width:${progress}%"></span></div><div class="mini-meta"><span>ตอบ ${answered}/${total}</span><span>${result}</span></div>
+    </button>`;
+  }).join('');
+  grid.querySelectorAll('[data-source-set]').forEach(btn=>btn.addEventListener('click',()=>openSourceSet(category,btn.dataset.sourceSet)));
+  const resources=collection.resources||[];
+  $('#collectionResources').innerHTML=resources.length?`<div class="section-head"><div><h2>แหล่งฝึกเพิ่มเติมจากเอกสาร</h2><p>ลิงก์ที่ปรากฏอยู่ในไฟล์ต้นฉบับ</p></div></div>${resources.map(r=>`<a class="resource-card" href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><strong>${escapeHtml(r.title)}</strong><span>${escapeHtml(r.description)}</span><b>เปิดแหล่งต้นฉบับ ↗</b></a>`).join('')}`:'';
+}
+
+function openSourceSet(category,setId){
+  const set=sourceSetById(category,setId); if(!set) return;
+  state.mode='source-quiz'; state.sourceCategory=category; state.sourceSetId=setId; persist();
+  $('#homeView').hidden=true; $('#quizView').hidden=true; $('#vocabView').hidden=true; $('#lessonView').hidden=true; $('#collectionView').hidden=true; $('#sourceQuizView').hidden=false;
+  renderSourceQuiz(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function sourceKeyNotice(set){
+  if(set.keyStatus==='official') return '<strong>Official KEY:</strong> การตรวจถูก/ผิดใช้เฉลยที่พบในเอกสาร KEY ของ Google Drive';
+  if(set.keyStatus==='transcript-derived') return '<strong>ไม่มี KEY ทางการในโฟลเดอร์:</strong> คะแนนของชุดนี้อนุมานจาก transcript ที่อยู่ในเอกสารต้นฉบับ จึงแยกสถานะออกจาก Official KEY';
+  return '<strong>ไม่มี KEY ทางการในโฟลเดอร์:</strong> คุณยังทำและบันทึกคำตอบได้ แต่ระบบจะไม่เดาเฉลยหรือแสดงว่าถูก/ผิด';
+}
+
+function sourcePassageHtml(passage){
+  return `<aside class="source-passage"><span>PASSAGE · ข้อ ${passage.from}${passage.to!==passage.from?`–${passage.to}`:''}</span><h3>${escapeHtml(passage.title||'Reading passage')}</h3><p>${escapeHtml(passage.text||'')}</p></aside>`;
+}
+function sourceAudioHtml(group){
+  return `<aside class="source-audio"><div><span>LISTENING AUDIO</span><strong>${escapeHtml(group.title||'Audio')}</strong></div><audio controls preload="none" src="${escapeHtml(group.audio)}">Your browser does not support audio.</audio></aside>`;
+}
+function sourceCorrectDisplay(item){
+  if(!sourceItemScorable(item)) return '—';
+  if(item.kind==='mcq' || (Array.isArray(item.options)&&item.options.length)){
+    const idx=letters.indexOf(item.key); return `${item.key}. ${item.options[idx]??''}`;
+  }
+  return String(item.key);
+}
+function sourceFeedbackHtml(item,selected,set){
+  const scorable=sourceItemScorable(item);
+  if(!scorable) return `<div class="source-feedback neutral"><strong>บันทึกคำตอบแล้ว</strong><p>เอกสารที่ได้รับไม่มี KEY ทางการสำหรับข้อนี้ ระบบจึงไม่เติมหรือเดาเฉลยแทนต้นฉบับ</p>${selected?`<p>คำตอบของคุณ: <b>${escapeHtml(selected)}</b></p>`:''}</div>`;
+  const correct=sourceAnswerCorrect(item,selected); const sourceText=item.answerSource==='transcript-derived'?'อนุมานจาก transcript ในต้นฉบับ':'อ้างอิง Official KEY';
+  const correctLabel=sourceCorrectDisplay(item);
+  let learning='';
+  if(item.kind==='mcq' || (Array.isArray(item.options)&&item.options.length)){
+    const idx=letters.indexOf(item.key), label=item.options[idx]||'';
+    const guide=lessonGuide('',item.q,label);
+    learning=`<details class="source-learning"><summary>ดูแนวคิดช่วยเรียน</summary><div><strong>${escapeHtml(guide.topic)}</strong><code>${escapeHtml(guide.pattern)}</code><p>${escapeHtml(guide.basic)}</p><p><b>ทริก:</b> ${escapeHtml(guide.tip)}</p></div></details>`;
+  }
+  return `<div class="source-feedback ${correct?'good':'bad'}"><strong>${correct?'ตอบถูก':'ตอบผิด'}</strong><p>คำตอบของคุณ: <b>${escapeHtml(selected||'—')}</b></p><p>เฉลย: <b class="answer-text-correct">${escapeHtml(correctLabel)}</b></p><small>${sourceText}</small>${learning}</div>`;
+}
+
+function renderSourceQuiz(){
+  const category=state.sourceCategory, set=sourceSetById(category,state.sourceSetId); if(!set) return showCollection(category);
+  const key=sourceAttemptKey(category,set.id), answers=sourceSetAnswers(category,set.id), checked=!!state.sourceChecked[key];
+  const answerable=sourceAnswerableCount(set), answered=sourceAnsweredCount(category,set.id), progress=answerable?Math.round(answered/answerable*100):0;
+  const score=sourceScore(category,set.id);
+  $('#sourceQuizTitle').textContent=set.title; $('#sourceQuizMeta').textContent=`ตอบแล้ว ${answered}/${answerable} · ${set.subtitle||''}`;
+  $('#sourceProgressBar').style.width=`${progress}%`;
+  $('#sourceKeyBadge').textContent=sourceStatusLabel(set.keyStatus); $('#sourceKeyBadge').className=`mode-badge source-${set.keyStatus||'missing'}`;
+  $('#sourceScoreChip').className=`score-chip ${checked&&score.total?'done':'pending'}`;
+  $('#sourceScoreChip').textContent=checked?(score.total?`${score.score}/${score.total}`:'บันทึกแล้ว'):'ยังไม่ตรวจ';
+  $('#sourceQuizNotice').innerHTML=sourceKeyNotice(set);
+  const passageByFrom=new Map((set.passages||[]).map(p=>[p.from,p]));
+  const audioByFrom=new Map((set.audioGroups||[]).map(a=>[a.from,a]));
+  const list=$('#sourceQuizList');
+  list.innerHTML=set.items.map((item,index)=>{
+    const selected=answers[item.sourceNo]??''; const scorable=sourceItemScorable(item); const correctness=checked?sourceAnswerCorrect(item,selected):null;
+    let className='question-card source-question-card';
+    if(checked&&scorable) className+=correctness?' is-correct':' is-wrong';
+    let control='';
+    if(item.kind==='mcq' || (Array.isArray(item.options)&&item.options.length)){
+      control=`<div class="answer-options">${item.options.map((label,i)=>{const letter=letters[i];let cls='answer-option';if(selected===letter)cls+=' selected';if(checked&&scorable&&letter===item.key)cls+=' correct';if(checked&&scorable&&selected===letter&&letter!==item.key)cls+=' wrong';return `<button type="button" class="${cls}" data-source-no="${item.sourceNo}" data-source-choice="${letter}" aria-pressed="${selected===letter}"><span class="answer-letter">${letter}</span><span class="answer-text">${escapeHtml(label||'—')}</span></button>`}).join('')}</div>`;
+    }else if(item.kind==='text'){
+      control=`<label class="source-text-answer"><span>คำตอบของคุณ</span><input type="text" data-source-input="${item.sourceNo}" value="${escapeHtml(selected)}" autocomplete="off" placeholder="พิมพ์คำที่เติมในช่องว่าง"></label>`;
+    }else control='<div class="source-note-box">กิจกรรมนี้เก็บไว้ตามต้นฉบับ แต่ไม่มีข้อมูลเพียงพอสำหรับตรวจอัตโนมัติ</div>';
+    return `${passageByFrom.has(item.sourceNo)?sourcePassageHtml(passageByFrom.get(item.sourceNo)):''}${audioByFrom.has(item.sourceNo)?sourceAudioHtml(audioByFrom.get(item.sourceNo)):''}<article class="${className}"><div class="question-top"><span class="question-no">${item.sourceNo}</span>${item.answerSource==='transcript-derived'?'<span class="origin">Transcript-derived key</span>':item.answerSource==='official-key'?'<span class="origin">Official KEY</span>':'<span class="origin">No official KEY</span>'}</div><p class="question-text">${escapeHtml(item.q)}</p>${control}${checked?sourceFeedbackHtml(item,selected,set):''}</article>`;
+  }).join('');
+  list.querySelectorAll('[data-source-choice]').forEach(btn=>btn.addEventListener('click',()=>chooseSourceAnswer(Number(btn.dataset.sourceNo),btn.dataset.sourceChoice)));
+  list.querySelectorAll('[data-source-input]').forEach(input=>input.addEventListener('input',()=>inputSourceAnswer(Number(input.dataset.sourceInput),input.value)));
+  $('#sourceDockTitle').textContent=set.keyStatus==='missing'?'ตอบเพื่อเก็บไว้ทบทวน':'ทำเสร็จแล้วค่อยตรวจพร้อมกัน';
+  $('#sourceDockMeta').textContent=`ตอบแล้ว ${answered}/${answerable} · ${sourceStatusLabel(set.keyStatus)}`;
+  $('#sourceCheck').textContent=checked?(score.total?'ตรวจใหม่':'บันทึกแล้ว'):(score.total?'ตรวจคำตอบ':'บันทึกคำตอบ');
+  $('#sourceResultPanel').hidden=!checked;
+  if(checked){
+    if(score.total){const pct=Math.round(score.score/score.total*100);$('#sourceResultPanel').innerHTML=`<div class="source-result-score"><span>คะแนน</span><strong>${score.score}/${score.total}</strong><b>${pct}%</b></div><div><strong>${sourceStatusLabel(set.keyStatus)}</strong><p>${set.keyStatus==='transcript-derived'?'คะแนนนี้มาจากคำตอบที่สรุปจาก transcript ไม่ใช่ KEY ทางการ':'ตรวจตาม KEY ของชุดเอกสาร'}</p></div>`}
+    else $('#sourceResultPanel').innerHTML='<div><strong>บันทึกคำตอบแล้ว</strong><p>ชุดนี้ไม่มี KEY ทางการใน Google Drive จึงไม่แสดงคะแนนถูก/ผิด</p></div>';
+  }
+}
+
+function chooseSourceAnswer(no,choice){
+  const key=sourceAttemptKey(state.sourceCategory,state.sourceSetId); const answers=sourceSetAnswers(state.sourceCategory,state.sourceSetId); answers[no]=choice;
+  if(state.sourceChecked[key]) state.sourceChecked[key]=false; persist(); renderSourceQuiz();
+  document.querySelector(`[data-source-no="${no}"]`)?.closest('.question-card')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function inputSourceAnswer(no,value){
+  const key=sourceAttemptKey(state.sourceCategory,state.sourceSetId); const answers=sourceSetAnswers(state.sourceCategory,state.sourceSetId); answers[no]=value;
+  if(state.sourceChecked[key]){state.sourceChecked[key]=false;persist();renderSourceQuiz();return;}
+  persist(); const set=sourceSetById(state.sourceCategory,state.sourceSetId), answered=sourceAnsweredCount(state.sourceCategory,state.sourceSetId), total=sourceAnswerableCount(set);
+  $('#sourceQuizMeta').textContent=`ตอบแล้ว ${answered}/${total} · ${set.subtitle||''}`; $('#sourceProgressBar').style.width=`${total?Math.round(answered/total*100):0}%`; $('#sourceDockMeta').textContent=`ตอบแล้ว ${answered}/${total} · ${sourceStatusLabel(set.keyStatus)}`;
+}
+function checkSourceAnswers(){
+  const key=sourceAttemptKey(state.sourceCategory,state.sourceSetId); state.sourceChecked[key]=true; persist(); renderSourceQuiz(); $('#sourceScoreChip').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetSourceAttempt(){
+  const key=sourceAttemptKey(state.sourceCategory,state.sourceSetId); state.sourceAnswers[key]={}; state.sourceChecked[key]=false; persist(); renderSourceQuiz(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+
 const LESSON_SEQUENCE = [
   'Verb to be',
   'Subject pronoun กับ Object pronoun',
@@ -816,6 +1025,8 @@ function showLessons(){
   $('#homeView').hidden=true;
   $('#quizView').hidden=true;
   $('#vocabView').hidden=true;
+  $('#collectionView').hidden=true;
+  $('#sourceQuizView').hidden=true;
   $('#lessonView').hidden=false;
   renderLessonCatalog();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1012,6 +1223,11 @@ function checkLessonQuiz(index){
 
 
 $('#brandHome').addEventListener('click',showHome);
+$('#openAllCategories').addEventListener('click',showHome);
+$('#collectionBackHome').addEventListener('click',showHome);
+$('#sourceBackCollection').addEventListener('click',()=>showCollection(state.sourceCategory));
+$('#sourceCheck').addEventListener('click',checkSourceAnswers);
+$('#sourceReset').addEventListener('click',resetSourceAttempt);
 $('#openLessons').addEventListener('click',showLessons);
 $('#openLessonsHome').addEventListener('click',showLessons);
 $('#lessonBackHome').addEventListener('click',showHome);
@@ -1032,6 +1248,7 @@ $('#resetAll').addEventListener('click',()=>{
   if(confirm('ล้างคำตอบ คะแนน ความคืบหน้าบทเรียน และชุดสุ่มทั้งหมดหรือไม่?')){
     state.answers={}; state.checked={}; state.randomAttempt=null; state.bestRandom=null;
     state.lessonProgress={passed:{},attempts:{},recent:{}}; state.lessonAttempt=null; state.lessonCurrent=0;
+    state.sourceAnswers={}; state.sourceChecked={}; state.sourceSetId=null;
     persist(); renderHome();
   }
 });

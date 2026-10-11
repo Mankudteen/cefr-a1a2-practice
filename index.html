@@ -4,24 +4,29 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light" />
-  <title>CEFR A1–A2 Practice</title>
+  <title>CEFR Practice Hub</title>
   <link rel="icon" href="data:," />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
     <button class="brand" id="brandHome" type="button" aria-label="กลับหน้าหลัก">
-      <span class="brand-mark">A1</span>
+      <span class="brand-mark">CE</span>
       <span class="brand-copy">
-        <strong>CEFR A1–A2 Practice</strong>
-        <small>ระบบฝึกทำโจทย์ Grammar · 300 ข้อ</small>
+        <strong>CEFR Practice Hub</strong>
+        <small>A1–A2 · B1–B2 · Reading · Listening · Level Up</small>
       </span>
     </button>
-    <div class="top-actions"><button id="openLessons" class="secondary-btn" type="button">บทเรียน</button><button id="openVocabulary" class="secondary-btn" type="button">คำศัพท์</button><button id="openSetPicker" class="secondary-btn" type="button">เลือกชุด</button></div>
+    <div class="top-actions"><button id="openAllCategories" class="secondary-btn" type="button">หมวดทั้งหมด</button><button id="openLessons" class="secondary-btn" type="button">บทเรียน</button><button id="openVocabulary" class="secondary-btn" type="button">คำศัพท์</button><button id="openSetPicker" class="secondary-btn" type="button">เลือกชุด</button></div>
   </header>
 
   <main class="shell">
     <section id="homeView" class="home-view">
+      <div class="category-overview">
+        <div class="category-overview-copy"><span class="study-kicker">CEFR PRACTICE HUB</span><h1>เลือกหมวดที่ต้องการฝึก</h1><p>รวมโจทย์จากเอกสารใน Google Drive แยกตามแหล่งที่มา โดยเก็บข้อที่ซ้ำกันไว้เมื่อปรากฏในเอกสารคนละชุด</p></div>
+        <div id="categoryGrid" class="category-grid"></div>
+      </div>
+      <div class="a1-section-label"><span>A1–A2</span><strong>Grammar Practice เดิม · 20 Sets · 300 ข้อ</strong></div>
       <div class="hero">
         <div class="hero-copy">
           <h1>ฝึกทำโจทย์ แล้วค่อยตรวจทีเดียว</h1>
@@ -55,6 +60,28 @@
       <div class="home-actions">
         <button id="resetAll" class="danger-ghost" type="button">ล้างประวัติการฝึกทั้งหมด</button>
       </div>
+    </section>
+
+    <section id="collectionView" class="collection-view" hidden>
+      <div class="collection-head">
+        <div><button id="collectionBackHome" class="text-btn" type="button">← กลับหมวดทั้งหมด</button><div class="collection-title-row"><span id="collectionMark" class="collection-mark">B1</span><div><h1 id="collectionTitle">B1–B2</h1><p id="collectionDescription"></p></div></div></div>
+        <div id="collectionCount" class="vocab-count">0 ข้อ</div>
+      </div>
+      <div id="collectionNotice" class="source-notice"></div>
+      <div id="collectionGrid" class="collection-grid"></div>
+      <div id="collectionResources" class="collection-resources"></div>
+    </section>
+
+    <section id="sourceQuizView" class="source-quiz-view" hidden>
+      <div class="quiz-head">
+        <div><button id="sourceBackCollection" class="text-btn" type="button">← กลับรายการชุด</button><div class="quiz-title-line"><h1 id="sourceQuizTitle">ชุดฝึก</h1><span id="sourceKeyBadge" class="mode-badge">Source</span></div><p id="sourceQuizMeta"></p></div>
+        <div id="sourceScoreChip" class="score-chip pending">ยังไม่ตรวจ</div>
+      </div>
+      <div class="progress-track"><div id="sourceProgressBar" class="progress-fill"></div></div>
+      <div id="sourceQuizNotice" class="source-notice"></div>
+      <div id="sourceQuizList" class="question-list"></div>
+      <div class="check-dock source-check-dock"><div class="check-copy"><strong id="sourceDockTitle">ทำโจทย์แล้วค่อยตรวจ</strong><span id="sourceDockMeta"></span></div><div class="dock-actions"><button id="sourceReset" class="secondary-btn" type="button">เริ่มใหม่</button><button id="sourceCheck" class="primary-btn" type="button">ตรวจคำตอบ</button></div></div>
+      <div id="sourceResultPanel" class="source-result-panel" hidden></div>
     </section>
 
     <section id="vocabView" class="vocab-view" hidden>
@@ -150,6 +177,7 @@
   <script src="learning-data.js"></script>
   <script src="sentence-structure.js"></script>
   <script src="lesson-extra-questions.js"></script>
+  <script src="extended-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
