@@ -180,3 +180,78 @@ body{background:linear-gradient(180deg,#f8f6ee 0%,#f3f0e6 100%);color:var(--text
 .category-card[data-category="a1a2"] .category-mark{background:#1f7888}.category-card[data-category="b1b2"] .category-mark{background:#d64977}.category-card[data-category="reading"] .category-mark{background:#5aa3b5}.category-card[data-category="listening"] .category-mark{background:#8ba4ad}.category-card[data-category="levelup"] .category-mark{background:#f0c2b7;color:#5d4650}
 .category-card[data-category="a1a2"].active{background:#edf6f7;border-color:#a9d3da}.category-card[data-category="b1b2"].active{background:#fdf0f4;border-color:#e9afc2}.category-card[data-category="reading"].active{background:#eef7f8;border-color:#b7d9df}.category-card[data-category="listening"].active{background:#f0f3f3;border-color:#c3ced1}.category-card[data-category="levelup"].active{background:#fbf4eb;border-color:#ead8c8}
 .category-count{border-color:#e7e0d3}.collection-mark{background:var(--accent)}.collection-tools{background:rgba(255,253,250,.96);border-color:var(--line)}
+
+/* 2026-10-12 — palette lock from the two supplied swatches + A1 answer parity */
+:root{
+  --palette-teal:#247b89;
+  --palette-teal-mid:#56a4b6;
+  --palette-teal-pale:#afdce5;
+  --palette-bluegray:#8da6af;
+  --palette-slate:#7f969d;
+  --palette-rose:#d24d78;
+  --palette-blush:#f0c0b5;
+  --palette-sand:#eee3cd;
+  --palette-cream:#f7f5e6;
+  --palette-warmgray:#e7e5e0;
+  --bg:#f7f5e6;
+  --surface:#fffdf8;
+  --surface-2:#eef4f3;
+  --text:#29454b;
+  --muted:#71858a;
+  --line:#dedbd1;
+  --accent:#247b89;
+  --accent-2:#1d6571;
+  --accent-soft:#dceff2;
+  --good:#247b70;
+  --good-bg:#e7f4f0;
+  --bad:#d24d78;
+  --bad-bg:#fbe9ef;
+}
+body{background:var(--palette-cream)!important;color:var(--text)}
+.topbar{background:rgba(247,245,230,.96)!important;border-bottom-color:#ddd8c9!important}
+.brand-mark,.collection-mark,.account-btn,.score-chip.done,.lesson-overall,.random-cta,.study-tools{background:var(--palette-teal)!important;color:#fff!important}
+.primary-btn{background:var(--palette-teal)!important;border-color:var(--palette-teal)!important}.primary-btn:hover{background:var(--accent-2)!important}
+.secondary-btn{background:#fffdf8!important;border-color:#d8d4c9!important;color:var(--text)!important}.secondary-btn:hover{border-color:var(--palette-teal-mid)!important}
+.text-btn,.lesson-topic,.vocab-term .thai,.lesson-example-source,.lesson-quiz-top>span,.reading-speaker{color:var(--palette-teal)!important}
+.progress-fill,.mini-progress span,.lesson-progress-track span{background:var(--palette-teal-mid)!important}
+.question-card,.stat,.set-card,.lesson-card,.vocab-card,.vocab-toolbar,.source-result-panel,.auth-dialog{background:var(--surface)!important;border-color:var(--line)!important}
+.answer-option{background:#fffdf8!important;border-color:#d8ddd9!important}.answer-option:hover{border-color:var(--palette-teal-mid)!important;background:#f6fbfb!important}.answer-option.selected{border-color:var(--palette-teal)!important;background:#e8f4f5!important}.answer-option.selected .answer-letter{background:var(--palette-teal)!important}.answer-letter{background:#edf2f1!important;color:#536a70!important}
+.answer-option.correct{background:#e7f4f0!important;border-color:#7fbeb2!important}.answer-option.correct .answer-letter{background:#247b70!important;color:#fff!important}.answer-option.wrong{background:#fbe9ef!important;border-color:#df88a4!important}.answer-option.wrong .answer-letter{background:var(--palette-rose)!important;color:#fff!important}
+.question-card.is-correct{border-color:#8bc7bc!important}.question-card.is-wrong{border-color:#e4a0b5!important}
+.result-status.good{background:#e7f4f0!important;color:#247b70!important}.result-status.bad{background:#fbe9ef!important;color:var(--palette-rose)!important}
+.answer-text-correct,.correct-answer,.translation-correct{color:#247b70!important}.answer-text-wrong,.wrong-answer,.translation-wrong{color:var(--palette-rose)!important}
+.status-banner,.source-notice,.vocab-note{background:#e7f2f3!important;border-color:#bfd9de!important;color:#3c6670!important}
+.lesson-cta{background:linear-gradient(135deg,#dceff2 0%,#f4dfd8 50%,#f3ead5 100%)!important;border-color:#d9d4c8!important}
+.source-passage{background:var(--palette-teal)!important}.source-passage>span{color:var(--palette-teal-pale)!important}.source-passage p{color:#eef8f8!important}
+.source-audio,.lesson-source-audio{background:#e8f3f5!important;border-color:#c0dce1!important}.source-audio span,.lesson-source-audio>span{color:var(--palette-teal)!important}
+.pattern-box code,.syntax-pattern code,.lesson-reason-box code,.source-learning code{background:var(--palette-teal)!important;color:#fff!important}
+.memory-tip,.lesson-signal-box{background:#f4ead8!important;border-color:#dfcda8!important;color:#725f3e!important}
+.your-mistake{background:#fff7f9!important;border-color:#e8b1c2!important}.success-review{background:#f2faf7!important;border-color:#add8cf!important}
+
+/* Imported categories now follow the A1–A2 explanation anatomy exactly. */
+.source-a1-feedback{padding:0!important;margin-top:18px!important;border-radius:0!important;background:transparent!important;color:var(--text)!important;border-top:1px solid var(--line)!important}
+.source-a1-feedback .feedback-result-row{padding-top:16px}
+.source-a1-feedback .lesson-section{background:#fffdf8!important;border-color:#d8ddd9!important}
+.source-a1-feedback .question-focus{background:#fffdf8!important}
+.source-a1-feedback .correct-translation{background:#e8f4f1!important;border-color:#b7dcd4!important}
+.source-a1-feedback .pattern-box code{background:var(--palette-teal)!important}
+.source-a1-feedback .source-question-thai{color:#71858a!important;margin-top:7px!important;line-height:1.7!important}
+.source-a1-feedback .source-answer-authority{display:block;margin-top:10px;color:#7c8b8e;font-size:10px}
+.source-a1-feedback .syntax-analysis{background:#fffdf8!important;border-color:#ccd9d8!important}
+.source-a1-feedback .syntax-learning-badge{background:var(--palette-teal)!important}
+.source-a1-feedback .syntax-help{background:#e8f3f5!important;color:#466a72!important}
+.source-a1-feedback .syntax-inline-piece.role-qw .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-qw .syntax-inline-word{color:#4c92a4!important}
+.source-a1-feedback .syntax-inline-piece.role-aux .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-aux .syntax-inline-word{color:#247b89!important}
+.source-a1-feedback .syntax-inline-piece.role-s .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-s .syntax-inline-word{color:#5b8390!important}
+.source-a1-feedback .syntax-inline-piece.role-v .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-v .syntax-inline-word,.source-a1-feedback .syntax-inline-piece.role-v1 .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-v1 .syntax-inline-word{color:#247b70!important}
+.source-a1-feedback .syntax-inline-piece.role-o .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-o .syntax-inline-word{color:#b16f5f!important}
+.source-a1-feedback .syntax-inline-piece.role-c .syntax-inline-tag,.source-a1-feedback .syntax-inline-piece.role-c .syntax-inline-word{color:#b04f74!important}
+
+/* Palette distribution across the five study categories. */
+.category-card[data-category="a1a2"] .category-mark{background:#247b89!important}.category-card[data-category="b1b2"] .category-mark{background:#d24d78!important}.category-card[data-category="reading"] .category-mark{background:#56a4b6!important}.category-card[data-category="listening"] .category-mark{background:#8da6af!important}.category-card[data-category="levelup"] .category-mark{background:#f0c0b5!important;color:#654b52!important}
+.category-card[data-category="a1a2"].active{background:#e8f3f5!important;border-color:#a9d5dd!important}.category-card[data-category="b1b2"].active{background:#fae9ef!important;border-color:#e7afc1!important}.category-card[data-category="reading"].active{background:#edf7f9!important;border-color:#b5dce4!important}.category-card[data-category="listening"].active{background:#eef2f2!important;border-color:#c5d0d3!important}.category-card[data-category="levelup"].active{background:#f8efe6!important;border-color:#e7d3c3!important}
+
+@media(max-width:680px){.source-a1-feedback .answer-compare{grid-template-columns:1fr}.source-a1-feedback .lesson-grid{grid-template-columns:1fr}.source-a1-feedback .lesson-section{padding:13px!important}}
+
+/* Finish palette coverage for persistent controls. */
+.check-dock{background:rgba(36,123,137,.96)!important;box-shadow:0 18px 46px rgba(36,123,137,.22)!important}.check-copy span{color:#dceff2!important}.lesson-quick-flow>div>span,.lesson-quiz-heading>span,.syntax-learning-badge{background:var(--palette-teal)!important}.danger-ghost{border-color:#e4afbd!important;color:var(--palette-rose)!important}.resume-banner{background:#f1ead8!important;border-color:#dfd2b8!important}.resume-banner>span,.resume-banner>b{color:var(--palette-rose)!important}
