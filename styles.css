@@ -127,3 +127,56 @@
 .reading-dialogue-question{display:grid;gap:7px!important;line-height:1.55!important}.reading-dialogue-line{display:grid;grid-template-columns:28px 1fr;gap:7px;align-items:start}.reading-speaker{font-weight:900;color:var(--accent)}.reading-dialogue-prompt{font-weight:800;margin-bottom:2px}.lesson-example-question.reading-dialogue-question{font-size:14px}.lesson-simple-sentence .reading-dialogue-line{grid-template-columns:26px 1fr}
 .lesson-correct-only{border:0!important;border-top:1px solid #dce2ec!important;border-radius:0!important;background:transparent!important;padding:16px 0!important;box-shadow:none!important}.lesson-correct-only:first-child{border-top:0!important}.lesson-correct-only .lesson-simple-answer{border:0!important;background:transparent!important;padding:8px 0 4px!important;display:flex!important;gap:7px!important;align-items:baseline!important}.lesson-correct-only .lesson-simple-answer span{margin:0!important}.lesson-correct-only .lesson-simple-answer strong{font-size:15px!important}.lesson-correct-only .lesson-simple-answer small{display:inline!important;margin:0!important}.lesson-correct-only .lesson-simple-sentence{border:0!important;border-left:3px solid #8bcbb0!important;border-radius:0!important;background:transparent!important;padding:7px 0 7px 10px!important;margin-top:3px!important}.lesson-correct-only .lesson-simple-reason{margin:8px 0 0!important}.lesson-correct-only .lesson-more{border:0!important;border-radius:0!important;margin-top:8px!important;background:transparent!important}.lesson-correct-only .lesson-more summary{padding:5px 0!important}.lesson-correct-only .lesson-more-body{padding:7px 0 0!important;border-top:0!important}.lesson-quiz-review-body.correct-only{padding:10px 12px}.lesson-review-correct{margin:0 0 7px!important}.lesson-quiz-deep-review{border-left:0!important;border-right:0!important;border-radius:0!important;background:transparent!important}.lesson-quiz-deep-review summary{padding-left:0!important}.lesson-method-board,.lesson-quick-method{border:0!important;background:transparent!important;padding-left:0!important;padding-right:0!important;box-shadow:none!important}.lesson-core-card{border-radius:10px!important}.lesson-examples{gap:0!important}
 @media(max-width:680px){.reading-dialogue-line{grid-template-columns:24px 1fr;gap:5px}.lesson-correct-only{padding:14px 0!important}.lesson-simple-answer{flex-wrap:wrap}.lesson-core-grid{gap:7px!important}}
+
+/* 2026-10-12 — final mixed teal / rose / beige theme + cleaner lesson answers */
+:root{
+  --bg:#f6f3e8;--surface:#fffdfa;--surface-2:#edf3f2;--text:#244047;--muted:#71848a;--line:#ded9cd;
+  --accent:#1f7888;--accent-2:#195f6d;--accent-soft:#dff0f2;--good:#2a8577;--good-bg:#e8f5f1;
+  --bad:#d64977;--bad-bg:#fbe9ef;--shadow:0 16px 42px rgba(55,78,82,.10);--radius:18px;
+  --rose:#d64977;--rose-soft:#f0c2b7;--beige:#eee2c8;--cream:#f3efdd;--gray-warm:#deddd8;--teal-soft:#acd7e1;--teal-mid:#5aa3b5
+}
+body{background:linear-gradient(180deg,#f8f6ee 0%,#f3f0e6 100%);color:var(--text)}
+.topbar{background:rgba(255,253,250,.95);border-color:var(--line)}.brand-mark{background:var(--accent)}
+.random-cta,.study-tools,.lesson-overall,.score-chip.done,.syntax-pattern code,.pattern-box code,.lesson-core-card{background:var(--accent);color:#fff}
+.random-cta{border-color:#8ebbc4}.random-cta:hover{background:var(--accent-2)}
+.primary-btn{background:var(--accent);border-color:var(--accent)}.primary-btn:hover{background:var(--accent-2)}
+.text-btn,.lesson-topic,.vocab-term .thai,.lesson-example-source,.lesson-quiz-top>span{color:var(--accent)}
+.progress-fill,.mini-progress span,.lesson-progress-track span{background:var(--accent)}
+.answer-option.selected{border-color:var(--accent);background:var(--accent-soft)}.answer-option.selected .answer-letter{background:var(--accent)}
+.mode-badge,.lesson-card-no{background:var(--accent-soft);color:var(--accent)}
+.status-banner,.vocab-note{background:#edf5f5;border-color:#c6dfe3;color:#315d66}
+.lesson-cta{background:linear-gradient(135deg,#dff0f2,#f8efe7);border-color:#d5d3c6}
+.vocab-toolbar,.vocab-card,.question-card,.stat,.set-card,.lesson-card,.lesson-detail-head,.lesson-checkpoint,.lesson-quiz-card{background:var(--surface)}
+
+/* Lesson answers: plain editorial layout instead of nested cards */
+.lesson-examples{gap:0}.lesson-example.lesson-clean-answer{background:transparent!important;border:0!important;border-radius:0!important;padding:22px 0!important;margin:0!important;border-top:1px solid var(--line)!important;box-shadow:none!important}
+.lesson-example.lesson-clean-answer:first-child{border-top:0!important;padding-top:8px!important}.lesson-example-source{margin-bottom:9px}.lesson-example-question{font-size:17px;line-height:1.7;color:var(--text)}
+.lesson-example-thai.clean-thai{margin:5px 0 0;padding:0!important;background:transparent!important;border:0!important;color:#6f8186;font-size:13px;line-height:1.7}
+.clean-answer-row{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-top:14px;padding:0;background:transparent;border:0}.clean-answer-row>span{font-size:10px;font-weight:900;letter-spacing:.04em;color:var(--accent);text-transform:uppercase}.clean-answer-row>strong{font-size:18px;color:var(--accent);line-height:1.45}.clean-answer-row>small{font-size:12px;color:var(--muted)}.clean-answer-row.neutral>strong{color:var(--muted)}
+.clean-sentence{margin-top:10px;padding:0 0 0 14px;border-left:3px solid var(--teal-soft);background:transparent!important;border-radius:0!important}.clean-sentence .en{font-size:14px;font-weight:720;line-height:1.7;color:#2e474d}.clean-sentence .th{font-size:13px;line-height:1.7;color:#71848a;margin-top:3px}.clean-sentence small{display:block;font-size:13px;color:#71848a;line-height:1.7;margin-top:3px}
+.clean-reason{margin:12px 0 0!important;padding:0!important;border:0!important;color:#51656a!important;font-size:13px!important;line-height:1.75!important}.clean-reason b{color:var(--text)}
+.clean-more{margin-top:11px;border:0!important;background:transparent!important}.clean-more summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:var(--accent);font-size:11px;font-weight:800;list-style:none}.clean-more summary::-webkit-details-marker{display:none}.clean-more summary::before{content:'+';font-size:15px;line-height:1}.clean-more[open] summary::before{content:'−'}.clean-more>div{margin-top:8px;padding:10px 0 0;border-top:1px dashed var(--line)}.clean-more p{margin:5px 0!important;padding:0!important;border:0!important;color:#607278!important;font-size:11px!important;line-height:1.7!important}
+.clean-audio{margin-top:10px}.clean-audio audio{width:100%;height:36px}
+
+/* Reduce boxes around lesson section itself */
+.lesson-detail-head{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 0 18px;background:transparent}.lesson-core-grid{gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:12px}.lesson-core-card{border:0!important;border-radius:0!important;background:transparent!important;color:var(--text)!important;padding:14px 14px 14px 0}.lesson-core-card:nth-child(2){background:transparent!important;color:var(--text)!important;border-left:1px solid var(--line)!important;padding-left:16px}.lesson-core-card>span{color:var(--muted)}.lesson-core-card code,.lesson-core-card strong{color:var(--text)}
+.lesson-quick-method{border:0!important;border-bottom:1px solid var(--line);border-radius:0!important;background:transparent!important;padding:18px 0!important}.lesson-quick-flow>div{border:0!important;background:transparent!important;padding:0!important}.lesson-method-board{border:0!important;border-bottom:1px solid var(--line);border-radius:0!important;background:transparent!important;padding:18px 0!important}
+.lesson-checkpoint{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:18px 0}.lesson-checkpoint p{color:var(--muted)}
+
+/* Final quiz answer explanation: correct answer only, no extra answer cards */
+.lesson-quiz-clean-review{margin-top:10px;padding:12px 0 2px;border-top:1px solid var(--line);background:transparent}.lesson-quiz-clean-review .clean-answer-row{margin-top:0}.lesson-quiz-clean-review .clean-sentence{margin-top:9px}.lesson-quiz-clean-review .clean-reason{font-size:12px!important}.lesson-mini-feedback{background:transparent!important;border:0!important;padding:8px 0 0!important}.lesson-mini-feedback p{color:var(--muted)}
+.lesson-quiz-deep-review,.lesson-choice-summary,.lesson-eliminate,.lesson-detail-options{display:none!important}
+
+/* Reading dialogue remains line-by-line and clean */
+.reading-dialogue-question{display:grid;gap:7px}.reading-dialogue-line{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;line-height:1.65}.reading-speaker{font-weight:900;color:var(--accent)}.reading-dialogue-prompt{margin-bottom:4px;color:var(--muted)}
+.clean-question-translation{font-size:12px;line-height:1.7;color:var(--muted);margin:8px 0}
+
+/* Rose is reserved for error/status accents, not large surfaces */
+.question-card.is-wrong{border-color:#e6a2b7}.lesson-quiz-card.bad{border-color:#e6a2b7}.result-status.bad{background:var(--bad-bg);color:var(--bad)}
+
+@media(max-width:680px){.lesson-example.lesson-clean-answer{padding:18px 0!important}.lesson-example-question{font-size:16px}.clean-answer-row>strong{font-size:17px}.lesson-core-grid{grid-template-columns:1fr}.lesson-core-card:nth-child(2){border-left:0!important;border-top:1px solid var(--line)!important;padding-left:0}.reading-dialogue-line{grid-template-columns:24px 1fr;gap:6px}.clean-sentence{padding-left:11px}}
+
+/* Mix the supplied palettes across the category hub */
+.category-card[data-category="a1a2"] .category-mark{background:#1f7888}.category-card[data-category="b1b2"] .category-mark{background:#d64977}.category-card[data-category="reading"] .category-mark{background:#5aa3b5}.category-card[data-category="listening"] .category-mark{background:#8ba4ad}.category-card[data-category="levelup"] .category-mark{background:#f0c2b7;color:#5d4650}
+.category-card[data-category="a1a2"].active{background:#edf6f7;border-color:#a9d3da}.category-card[data-category="b1b2"].active{background:#fdf0f4;border-color:#e9afc2}.category-card[data-category="reading"].active{background:#eef7f8;border-color:#b7d9df}.category-card[data-category="listening"].active{background:#f0f3f3;border-color:#c3ced1}.category-card[data-category="levelup"].active{background:#fbf4eb;border-color:#ead8c8}
+.category-count{border-color:#e7e0d3}.collection-mark{background:var(--accent)}.collection-tools{background:rgba(255,253,250,.96);border-color:var(--line)}
