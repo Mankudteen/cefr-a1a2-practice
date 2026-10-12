@@ -329,3 +329,85 @@ sourceLessonQuizHtml=function(category,index,lesson,attempt){
   const actions=checked?`<div class="lesson-quiz-actions"><button class="secondary-btn source-lesson-retry" type="button">ทำใหม่</button>${pct>=80&&index+1<buildSourceLessonCatalog(category).length?'<button class="primary-btn source-lesson-next" type="button">ไปบทถัดไป →</button>':'<button class="secondary-btn source-lesson-list" type="button">กลับรายการบทเรียน</button>'}</div>`:`<div class="lesson-quiz-actions"><span>ตอบแล้ว ${answered}/${entries.length}</span><button class="primary-btn source-lesson-submit" type="button" ${complete?'':'disabled'}>ตรวจแบบทดสอบ</button></div>`;
   return `<div class="lesson-quiz-shell"><div class="lesson-quiz-heading"><div><h3>ทดสอบ: ${escapeHtml(lesson.topic)}</h3><p>เกณฑ์ผ่าน 80%</p></div><span>${answered}/${entries.length}</span></div>${result}<div class="lesson-quiz-list">${cards}</div>${actions}</div>`;
 };
+
+
+// 2026-10-12 — Simplified lesson presentation: essential first, details on demand.
+function ltShortReason(text,max=150){
+  const value=String(text||'').replace(/\s+/g,' ').trim();
+  return value.length>max?`${value.slice(0,max).replace(/\s+\S*$/,'')}…`:value;
+}
+function ltQuickFlow(topic,guide,category){
+  const p=ltProfile(topic,guide,category);
+  return [
+    {n:'1',title:'หา clue',text:guide?.tip||p.steps[1]||p.steps[0]},
+    {n:'2',title:'ตัดช้อยส์',text:p.eliminate[0]||'ตัดข้อที่ผิดรูปหรือความหมายก่อน'},
+    {n:'3',title:'ยืนยัน',text:'เอาคำตอบกลับไปใส่ แล้วอ่าน/แปลทั้งประโยคอีกครั้ง'}
+  ];
+}
+ltLessonMethodHtml=function(topic,guide,category){
+  const flow=ltQuickFlow(topic,guide,category),p=ltProfile(topic,guide,category);
+  return `<section class="lesson-quick-method">
+    <h3>ทำข้อนี้ยังไง?</h3>
+    <div class="lesson-quick-flow">${flow.map(x=>`<div><span>${x.n}</span><p><b>${escapeHtml(x.title)}</b>${escapeHtml(ltShortReason(x.text,115))}</p></div>`).join('')}</div>
+    <details class="lesson-more"><summary>ดูหลักและส่วนเสริมของบทนี้</summary><div class="lesson-more-body"><p><b>Pattern:</b> ${escapeHtml(guide?.pattern||'ดูรูปและความหมายร่วมกัน')}</p><p><b>หลัก:</b> ${escapeHtml(guide?.basic||'')}</p><div class="lesson-extra-chips">${p.extra.map(x=>`<span>${escapeHtml(x)}</span>`).join('')}</div></div></details>
+  </section>`;
+};
+
+function ltA1OptionSummary(item,guide){
+  const record=learningData?.[item.set]?.[item.q-1]||{},correctLabel=item.options[letters.indexOf(item.key)]||'';
+  return item.options.map((label,i)=>{
+    const letter=letters[i],correct=letter===item.key,info=record.options?.[letter]||{};
+    const reason=correct?(item.explanation||guide.basic):choiceDiagnostic(guide,label,correctLabel);
+    return `<div class="lesson-choice-line ${correct?'keep':'drop'}"><span>${correct?'✓':'×'}</span><b>${letter}. ${escapeHtml(label||'—')}</b>${info.meaning?`<small>${escapeHtml(info.meaning)}</small>`:''}<em>${escapeHtml(ltShortReason(reason,105))}</em></div>`;
+  }).join('');
+}
+ltA1ExampleHtml=function(item,lesson){
+  const correctLabel=item.options[letters.indexOf(item.key)]||'',record=learningData?.[item.set]?.[item.q-1]||{},correctInfo=record.options?.[item.key]||{};
+  const guide=lessonGuide(item.explanation||'',item.question,correctLabel),signals=ltSignals(item.question,guide.topic),vocab=ltRelatedVocab(`${item.question} ${correctLabel}`,'a1a2');
+  return `<article class="lesson-example lesson-example-simple">
+    <div class="lesson-example-source">Set ${item.set} · ข้อ ${item.q}</div>
+    <div class="lesson-example-question">${escapeHtml(item.question)}</div>
+    <div class="lesson-simple-answer"><span>ตอบ</span><strong>${item.key}. ${escapeHtml(correctLabel)}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div>
+    <div class="lesson-simple-sentence"><div>${fillAnswerMarkup(item.question,correctLabel,'correct-answer')}</div>${correctInfo.thai?`<small>${escapeHtml(correctInfo.thai)}</small>`:''}</div>
+    <p class="lesson-simple-reason"><b>เพราะ:</b> ${escapeHtml(ltShortReason(item.explanation||guide.basic,190))}</p>
+    <div class="lesson-choice-summary"><h4>ตัดช้อยส์</h4>${ltA1OptionSummary(item,guide)}</div>
+    <details class="lesson-more"><summary>ดูรายละเอียดเพิ่ม</summary><div class="lesson-more-body"><p><b>โจทย์กำลังวัด:</b> ${escapeHtml(ltIntent(item.question,'a1a2'))}</p><p><b>จุดสังเกต:</b> ${escapeHtml(signals.join(' · '))}</p><p><b>Pattern:</b> ${escapeHtml(guide.pattern)}</p>${ltVocabHtml(vocab)}<div class="lesson-detail-options">${ltA1OptionRows(item,guide)}</div></div></details>
+  </article>`;
+};
+lessonExampleHtml=function(item,lesson){return ltA1ExampleHtml(item,lesson);};
+
+function ltSourceOptionSummary(entry,lesson,record,category){
+  const item=entry.item,correctLabel=item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||'');
+  if(!item.options?.length)return '';
+  return item.options.map((label,i)=>{
+    const letter=letters[i],correct=letter===item.key,info=record.options?.[letter]||{},reason=ltSourceChoiceReason(entry,lesson,letter,label,correctLabel,category);
+    return `<div class="lesson-choice-line ${correct?'keep':'drop'}"><span>${correct?'✓':'×'}</span><b>${letter}. ${escapeHtml(label||'—')}</b>${info.meaning?`<small>${escapeHtml(info.meaning)}</small>`:''}<em>${escapeHtml(ltShortReason(reason,105))}</em></div>`;
+  }).join('');
+}
+ltSourceExampleHtml=function(entry,lesson,category){
+  const item=entry.item,record=ltSourceRecord(entry),scorable=sourceItemScorable(item),correctLabel=scorable?(item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||'')):'',correctInfo=scorable&&item.options?.length?(record.options?.[item.key]||{}):{};
+  const guide=ltSourceGuide(entry,lesson,category),signals=ltSignals(item.q,lesson.topic),vocab=ltRelatedVocab(`${item.q} ${correctLabel}`,category),ctx=findSourceContext(entry.set,item);
+  const answerReason=scorable?ltSourceChoiceReason(entry,lesson,item.key,correctLabel,correctLabel,category):'ชุดนี้ไม่มี KEY ทางการ จึงสอนวิธีหา clue และตัดตัวเลือก แต่ไม่เดาคำตอบ';
+  const status=item.answerSource==='transcript-derived'?'Transcript-derived':item.answerSource==='official-key'?'Official KEY':'ไม่มี KEY';
+  return `<article class="lesson-example lesson-example-simple">
+    <div class="lesson-example-source">${escapeHtml(entry.set.title)} · ข้อ ${item.sourceNo} · ${status}</div>
+    <div class="lesson-example-question">${escapeHtml(item.q)}</div>
+    ${record.qThai?`<div class="lesson-example-thai strong">${escapeHtml(record.qThai)}</div>`:''}
+    ${ctx.audio?.audio||item.audio?`<div class="lesson-audio-inline"><audio controls preload="none" src="${escapeHtml(ctx.audio?.audio||item.audio)}"></audio></div>`:''}
+    ${scorable?`<div class="lesson-simple-answer"><span>ตอบ</span><strong>${escapeHtml(sourceCorrectDisplay(item))}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div>`:`<div class="lesson-simple-answer neutral"><span>สถานะ</span><strong>ไม่มี KEY ทางการ</strong></div>`}
+    ${scorable&&correctInfo.filled?`<div class="lesson-simple-sentence"><div>${escapeHtml(correctInfo.filled)}</div>${correctInfo.thai?`<small>${escapeHtml(correctInfo.thai)}</small>`:''}</div>`:''}
+    <p class="lesson-simple-reason"><b>${scorable?'เพราะ:':'วิธีทำ:'}</b> ${escapeHtml(ltShortReason(answerReason,190))}</p>
+    ${scorable&&item.options?.length?`<div class="lesson-choice-summary"><h4>ตัดช้อยส์</h4>${ltSourceOptionSummary(entry,lesson,record,category)}</div>`:''}
+    <details class="lesson-more"><summary>ดูรายละเอียดเพิ่ม</summary><div class="lesson-more-body"><p><b>โจทย์กำลังถาม:</b> ${escapeHtml(ltIntent(item.q,category))}</p><p><b>จุดสังเกต:</b> ${escapeHtml(signals.join(' · '))}</p><p><b>Pattern:</b> ${escapeHtml(guide.pattern||lesson.guide.pattern)}</p>${ltSourceContextHtml(entry,category)}${scorable?`<div class="lesson-detail-options">${ltSourceOptionRows(entry,lesson,record,category)}</div>`:''}${ltVocabHtml(vocab)}</div></details>
+  </article>`;
+};
+sourceLessonExample=function(entry,lesson,category=state.sourceCategory){return ltSourceExampleHtml(entry,lesson,category);};
+
+ltA1QuizReview=function(item,selected,lesson){
+  const label=item.options[letters.indexOf(item.key)]||'',chosen=selected?item.options[letters.indexOf(selected)]||'':'',record=learningData?.[item.set]?.[item.q-1]||{},correctInfo=record.options?.[item.key]||{},selectedInfo=selected?record.options?.[selected]||{}:{},guide=lessonGuide(item.explanation||'',item.question,label);
+  return `<details class="lesson-quiz-deep-review"><summary>ดูเหตุผลและการตัดช้อยส์</summary><div class="lesson-quiz-review-body"><div class="lesson-review-compare"><div><span>คุณตอบ</span><strong>${escapeHtml(chosen||'—')}</strong>${selectedInfo.meaning?`<small>${escapeHtml(selectedInfo.meaning)}</small>`:''}</div><div><span>คำตอบถูก</span><strong>${escapeHtml(label)}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div></div><p><b>เพราะ:</b> ${escapeHtml(item.explanation||guide.basic)}</p><div class="lesson-choice-summary">${ltA1OptionSummary(item,guide)}</div></div></details>`;
+};
+ltSourceQuizReview=function(entry,lesson,selected,category){
+  const item=entry.item,record=ltSourceRecord(entry),correctLabel=item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||''),selectedText=item.options?.length&&selected?item.options[letters.indexOf(selected)]||'':String(selected||''),correctInfo=item.options?.length?(record.options?.[item.key]||{}):{},selectedInfo=item.options?.length&&selected?(record.options?.[selected]||{}):{};
+  return `<details class="lesson-quiz-deep-review"><summary>ดูเหตุผลและการตัดช้อยส์</summary><div class="lesson-quiz-review-body"><div class="lesson-review-compare"><div><span>คุณตอบ</span><strong>${escapeHtml(selectedText||'—')}</strong>${selectedInfo.meaning?`<small>${escapeHtml(selectedInfo.meaning)}</small>`:''}</div><div><span>คำตอบถูก</span><strong>${escapeHtml(correctLabel)}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div></div><p><b>เพราะ:</b> ${escapeHtml(ltSourceChoiceReason(entry,lesson,item.key,correctLabel,correctLabel,category))}</p><div class="lesson-choice-summary">${ltSourceOptionSummary(entry,lesson,record,category)}</div></div></details>`;
+};
