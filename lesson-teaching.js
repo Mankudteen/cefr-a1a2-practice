@@ -273,7 +273,7 @@ function ltSourceExampleHtml(entry,lesson,category){
   return `<article class="lesson-example lesson-example-deep">
     <div class="lesson-example-source">${escapeHtml(entry.set.title)} · ข้อ ${item.sourceNo} · ${escapeHtml(status)}</div>
     <div class="lesson-example-question">${escapeHtml(item.q)}</div>
-    ${record.qThai?`<div class="lesson-example-thai strong">${escapeHtml(record.qThai)}</div>`:''}
+    ${record.qThai?`<div class="lesson-example-thai strong">${category==='reading'?ltReadingDialogueHtml(record.qThai):escapeHtml(record.qThai)}</div>`:''}
     ${ltSourceContextHtml(entry,category)}
     <div class="lesson-example-intent"><span>โจทย์กำลังถามอะไร</span><p>${escapeHtml(ltIntent(item.q,category))}</p></div>
     ${scorable?`<div class="lesson-answer-focus"><span>คำตอบที่ควรเลือก</span><strong>${escapeHtml(sourceCorrectDisplay(item))}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div>`:`<div class="lesson-answer-focus neutral"><span>สถานะเฉลย</span><strong>ไม่มี KEY ทางการ — ระบบจะไม่เดาคำตอบ</strong></div>`}
@@ -392,7 +392,7 @@ ltSourceExampleHtml=function(entry,lesson,category){
   return `<article class="lesson-example lesson-example-simple">
     <div class="lesson-example-source">${escapeHtml(entry.set.title)} · ข้อ ${item.sourceNo} · ${status}</div>
     <div class="lesson-example-question">${escapeHtml(item.q)}</div>
-    ${record.qThai?`<div class="lesson-example-thai strong">${escapeHtml(record.qThai)}</div>`:''}
+    ${record.qThai?`<div class="lesson-example-thai strong">${category==='reading'?ltReadingDialogueHtml(record.qThai):escapeHtml(record.qThai)}</div>`:''}
     ${ctx.audio?.audio||item.audio?`<div class="lesson-audio-inline"><audio controls preload="none" src="${escapeHtml(ctx.audio?.audio||item.audio)}"></audio></div>`:''}
     ${scorable?`<div class="lesson-simple-answer"><span>ตอบ</span><strong>${escapeHtml(sourceCorrectDisplay(item))}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div>`:`<div class="lesson-simple-answer neutral"><span>สถานะ</span><strong>ไม่มี KEY ทางการ</strong></div>`}
     ${scorable&&correctInfo.filled?`<div class="lesson-simple-sentence"><div>${escapeHtml(correctInfo.filled)}</div>${correctInfo.thai?`<small>${escapeHtml(correctInfo.thai)}</small>`:''}</div>`:''}
@@ -411,3 +411,67 @@ ltSourceQuizReview=function(entry,lesson,selected,category){
   const item=entry.item,record=ltSourceRecord(entry),correctLabel=item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||''),selectedText=item.options?.length&&selected?item.options[letters.indexOf(selected)]||'':String(selected||''),correctInfo=item.options?.length?(record.options?.[item.key]||{}):{},selectedInfo=item.options?.length&&selected?(record.options?.[selected]||{}):{};
   return `<details class="lesson-quiz-deep-review"><summary>ดูเหตุผลและการตัดช้อยส์</summary><div class="lesson-quiz-review-body"><div class="lesson-review-compare"><div><span>คุณตอบ</span><strong>${escapeHtml(selectedText||'—')}</strong>${selectedInfo.meaning?`<small>${escapeHtml(selectedInfo.meaning)}</small>`:''}</div><div><span>คำตอบถูก</span><strong>${escapeHtml(correctLabel)}</strong>${correctInfo.meaning?`<small>${escapeHtml(correctInfo.meaning)}</small>`:''}</div></div><p><b>เพราะ:</b> ${escapeHtml(ltSourceChoiceReason(entry,lesson,item.key,correctLabel,correctLabel,category))}</p><div class="lesson-choice-summary">${ltSourceOptionSummary(entry,lesson,record,category)}</div></div></details>`;
 };
+
+
+// 2026-10-12 — Reading dialogue readability + lesson answers reduced to correct answer only.
+function ltReadingDialogueHtml(text){
+  const raw=String(text||'').trim();
+  const re=/(Woman|Man|Girl|Boy|Speaker\s*\d+|Customer|Clerk|Interviewer|Interviewee|Teacher|Student|Doctor|Patient|ผู้หญิง|ผู้ชาย|เด็กผู้หญิง|เด็กผู้ชาย|A|B)\s*:\s*/gi;
+  const matches=[...raw.matchAll(re)];
+  if(matches.length<2) return escapeHtml(raw);
+  const speakers=new Map(), labels=['A','B','C','D'];
+  let next=0, html='';
+  const prefix=raw.slice(0,matches[0].index).trim();
+  if(prefix) html+=`<div class="reading-dialogue-prompt">${escapeHtml(prefix)}</div>`;
+  matches.forEach((m,i)=>{
+    const speaker=m[1].toLowerCase();
+    if(!speakers.has(speaker)) speakers.set(speaker,labels[next++]||String(next));
+    const start=m.index+m[0].length, end=i+1<matches.length?matches[i+1].index:raw.length;
+    const line=raw.slice(start,end).trim();
+    html+=`<div class="reading-dialogue-line"><span class="reading-speaker">${speakers.get(speaker)}:</span><span>${escapeHtml(line)}</span></div>`;
+  });
+  return html;
+}
+function ltQuestionDisplayHtml(text,category){return category==='reading'?ltReadingDialogueHtml(text):escapeHtml(text);}
+function ltFormatReadingNodes(root=document){
+  if(state.sourceCategory!=='reading')return;
+  root.querySelectorAll('.question-text,.lesson-question,.lesson-example-question,.lesson-example-thai,.source-question-thai,.lesson-quiz-card>p').forEach(el=>{
+    const raw=el.dataset.rawQuestion||el.textContent.trim();
+    if(!raw)return;
+    const html=ltReadingDialogueHtml(raw);
+    if(html!==escapeHtml(raw)){el.dataset.rawQuestion=raw;el.innerHTML=html;el.classList.add('reading-dialogue-question');}
+  });
+}
+
+const ltRenderSourceQuizBeforeDialogue=renderSourceQuiz;
+renderSourceQuiz=function(){ltRenderSourceQuizBeforeDialogue();ltFormatReadingNodes($('#sourceQuizView'));};
+
+ltA1ExampleHtml=function(item,lesson){
+  const correctLabel=item.options[letters.indexOf(item.key)]||'',record=learningData?.[item.set]?.[item.q-1]||{},info=record.options?.[item.key]||{};
+  const guide=lessonGuide(item.explanation||'',item.question,correctLabel),vocab=ltRelatedVocab(`${item.question} ${correctLabel}`,'a1a2');
+  return `<article class="lesson-example lesson-example-simple lesson-correct-only"><div class="lesson-example-source">Set ${item.set} · ข้อ ${item.q}</div><div class="lesson-example-question">${escapeHtml(item.question)}</div><div class="lesson-simple-answer"><span>คำตอบ</span><strong>${item.key}. ${escapeHtml(correctLabel)}</strong>${info.meaning?`<small>${escapeHtml(info.meaning)}</small>`:''}</div><div class="lesson-simple-sentence"><div>${fillAnswerMarkup(item.question,correctLabel,'correct-answer')}</div>${info.thai?`<small>${escapeHtml(info.thai)}</small>`:''}</div><p class="lesson-simple-reason"><b>เพราะ:</b> ${escapeHtml(ltShortReason(item.explanation||guide.basic,185))}</p><details class="lesson-more"><summary>ดูหลักเพิ่ม</summary><div class="lesson-more-body"><p><b>Pattern:</b> ${escapeHtml(guide.pattern)}</p><p><b>ทริก:</b> ${escapeHtml(guide.tip)}</p>${ltVocabHtml(vocab)}</div></details></article>`;
+};
+lessonExampleHtml=function(item,lesson){return ltA1ExampleHtml(item,lesson);};
+
+ltSourceExampleHtml=function(entry,lesson,category){
+  const item=entry.item,record=ltSourceRecord(entry),scorable=sourceItemScorable(item),correctLabel=scorable?(item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||'')):'',info=scorable&&item.options?.length?(record.options?.[item.key]||{}):{};
+  const guide=ltSourceGuide(entry,lesson,category),vocab=ltRelatedVocab(`${item.q} ${correctLabel}`,category),ctx=findSourceContext(entry.set,item);
+  const reason=scorable?ltSourceChoiceReason(entry,lesson,item.key,correctLabel,correctLabel,category):'ชุดนี้ไม่มี KEY ทางการ จึงแสดงวิธีอ่านโจทย์และคำแปล แต่ไม่เดาคำตอบ';
+  const status=item.answerSource==='transcript-derived'?'Transcript-derived':item.answerSource==='official-key'?'Official KEY':'ไม่มี KEY';
+  return `<article class="lesson-example lesson-example-simple lesson-correct-only"><div class="lesson-example-source">${escapeHtml(entry.set.title)} · ข้อ ${item.sourceNo} · ${status}</div><div class="lesson-example-question">${ltQuestionDisplayHtml(item.q,category)}</div>${record.qThai?`<div class="lesson-example-thai strong">${category==='reading'?ltReadingDialogueHtml(record.qThai):escapeHtml(record.qThai)}</div>`:''}${ctx.audio?.audio||item.audio?`<div class="lesson-audio-inline"><audio controls preload="none" src="${escapeHtml(ctx.audio?.audio||item.audio)}"></audio></div>`:''}${scorable?`<div class="lesson-simple-answer"><span>คำตอบ</span><strong>${escapeHtml(sourceCorrectDisplay(item))}</strong>${info.meaning?`<small>${escapeHtml(info.meaning)}</small>`:''}</div>`:`<div class="lesson-simple-answer neutral"><span>สถานะ</span><strong>ไม่มี KEY ทางการ</strong></div>`}${scorable&&info.filled?`<div class="lesson-simple-sentence"><div>${category==='reading'?ltReadingDialogueHtml(info.filled):escapeHtml(info.filled)}</div>${info.thai?`<small>${category==='reading'?ltReadingDialogueHtml(info.thai):escapeHtml(info.thai)}</small>`:''}</div>`:''}<p class="lesson-simple-reason"><b>${scorable?'เพราะ:':'วิธีทำ:'}</b> ${escapeHtml(ltShortReason(reason,185))}</p><details class="lesson-more"><summary>ดูหลักเพิ่ม</summary><div class="lesson-more-body"><p><b>วิธีคิด:</b> ${escapeHtml(lesson.guide.tip)}</p><p><b>Pattern:</b> ${escapeHtml(guide.pattern||lesson.guide.pattern)}</p>${ltSourceContextHtml(entry,category)}${ltVocabHtml(vocab)}</div></details></article>`;
+};
+sourceLessonExample=function(entry,lesson,category=state.sourceCategory){return ltSourceExampleHtml(entry,lesson,category);};
+
+ltA1QuizReview=function(item,selected,lesson){
+  const label=item.options[letters.indexOf(item.key)]||'',record=learningData?.[item.set]?.[item.q-1]||{},info=record.options?.[item.key]||{},guide=lessonGuide(item.explanation||'',item.question,label);
+  return `<details class="lesson-quiz-deep-review"><summary>ดูเหตุผล</summary><div class="lesson-quiz-review-body correct-only"><p class="lesson-review-correct"><b>คำตอบที่ถูก:</b> ${escapeHtml(label)}${info.meaning?` <small>(${escapeHtml(info.meaning)})</small>`:''}</p>${info.filled?`<div class="lesson-simple-sentence"><div>${escapeHtml(info.filled)}</div>${info.thai?`<small>${escapeHtml(info.thai)}</small>`:''}</div>`:''}<p><b>เพราะ:</b> ${escapeHtml(item.explanation||guide.basic)}</p></div></details>`;
+};
+ltSourceQuizReview=function(entry,lesson,selected,category){
+  const item=entry.item,record=ltSourceRecord(entry),label=item.options?.length?item.options[letters.indexOf(item.key)]||'':String(item.key||''),info=item.options?.length?(record.options?.[item.key]||{}):{};
+  return `<details class="lesson-quiz-deep-review"><summary>ดูเหตุผล</summary><div class="lesson-quiz-review-body correct-only"><p class="lesson-review-correct"><b>คำตอบที่ถูก:</b> ${escapeHtml(label)}${info.meaning?` <small>(${escapeHtml(info.meaning)})</small>`:''}</p>${record.qThai?`<p><b>แปลโจทย์:</b> ${escapeHtml(record.qThai)}</p>`:''}${info.filled?`<div class="lesson-simple-sentence"><div>${category==='reading'?ltReadingDialogueHtml(info.filled):escapeHtml(info.filled)}</div>${info.thai?`<small>${escapeHtml(info.thai)}</small>`:''}</div>`:''}<p><b>เพราะ:</b> ${escapeHtml(ltSourceChoiceReason(entry,lesson,item.key,label,label,category))}</p></div></details>`;
+};
+
+const ltRenderLessonDetailBeforeCopy=renderLessonDetail;
+renderLessonDetail=function(index){ltRenderLessonDetailBeforeCopy(index);const p=$('#lessonDetailPanel .lesson-subhead p');if(p)p.textContent='ดูคำตอบที่ถูก คำแปล และเหตุผลแบบสั้น ๆ';const s=$('#lessonDetailPanel .lesson-subhead>span');if(s)s.textContent=s.textContent.replace('ตัวอย่างละเอียด','ตัวอย่าง');};
+const ltOpenSourceLessonBeforeCopy=openSourceLesson;
+openSourceLesson=function(category,index){ltOpenSourceLessonBeforeCopy(category,index);const p=$('#sourceLessonDetailPanel .lesson-subhead p');if(p)p.textContent='ดูคำตอบที่ถูก คำแปล และเหตุผลแบบสั้น ๆ';const s=$('#sourceLessonDetailPanel .lesson-subhead>span');if(s)s.textContent=s.textContent.replace('ตัวอย่างละเอียด','ตัวอย่าง');ltFormatReadingNodes($('#sourceLessonDetailPanel'));};
